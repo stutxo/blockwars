@@ -37,23 +37,47 @@ pub unsafe extern "C" fn key_pressed(value: usize) {
     match key {
         Key::Left => {
             SQUARE_POS_X
-                .fetch_update(Ordering::SeqCst, Ordering::SeqCst, |x| Some(x - 1 * SPEED))
-                .unwrap();
+                .fetch_update(Ordering::SeqCst, Ordering::SeqCst, |x| {
+                    if x >= SPEED {
+                        Some(x - SPEED)
+                    } else {
+                        None
+                    }
+                })
+                .ok();
         }
         Key::Right => {
             SQUARE_POS_X
-                .fetch_update(Ordering::SeqCst, Ordering::SeqCst, |x| Some(x + 1 * SPEED))
-                .unwrap();
+                .fetch_update(Ordering::SeqCst, Ordering::SeqCst, |x| {
+                    if x + 10 + SPEED <= WIDTH as u32 {
+                        Some(x + SPEED)
+                    } else {
+                        None
+                    }
+                })
+                .ok();
         }
         Key::Up => {
             SQUARE_POS_Y
-                .fetch_update(Ordering::SeqCst, Ordering::SeqCst, |y| Some(y - 1 * SPEED))
-                .unwrap();
+                .fetch_update(Ordering::SeqCst, Ordering::SeqCst, |y| {
+                    if y >= SPEED {
+                        Some(y - SPEED)
+                    } else {
+                        None
+                    }
+                })
+                .ok();
         }
         Key::Down => {
             SQUARE_POS_Y
-                .fetch_update(Ordering::SeqCst, Ordering::SeqCst, |y| Some(y + 1 * SPEED))
-                .unwrap();
+                .fetch_update(Ordering::SeqCst, Ordering::SeqCst, |y| {
+                    if y + 10 + SPEED <= HEIGHT as u32 {
+                        Some(y + SPEED)
+                    } else {
+                        None
+                    }
+                })
+                .ok();
         }
     }
 }
