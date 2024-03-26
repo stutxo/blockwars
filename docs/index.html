@@ -1,13 +1,3 @@
 <!DOCTYPE html>
-<script type="module">
-    async function init() {
-        const { instance } = await WebAssembly.instantiateStreaming(
-            fetch("./blockwars.wasm")
-        );
-
-        const answer = instance.exports.the_answer();
-        console.log(answer);
-    }
-
-    init();
-</script>
+<script
+    type="module">(async () => { console.log((await WebAssembly.instantiateStreaming(fetch("./blockwars.wasm"))).instance.exports.the_answer()) })();</script>
