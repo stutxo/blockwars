@@ -2,10 +2,52 @@
 <html>
 
 <head>
-    <script
-        type="module">(async () => { const { instance: a } = await WebAssembly.instantiateStreaming(fetch("./blockwars.wasm")), w = 600, c = document.getElementById("canvas"); c.width = w; c.height = w; const b = a.exports.BUFFER.value, i = new ImageData(new Uint8ClampedArray(a.exports.memory.buffer, b, 4 * w * w), w), d = c.getContext("2d"), r = () => { a.exports.go(); d.putImageData(i, 0, 0); requestAnimationFrame(r) }; r() })();</script>
+    <script type="module">
+        (async () => {
+            const { instance: a } = await WebAssembly.instantiateStreaming(fetch("./blockwars.wasm")),
+                w = 800,
+                c = document.getElementById("canvas");
+            c.width = w;
+            c.height = w;
+            const b = a.exports.BUFFER.value,
+                i = new ImageData(new Uint8ClampedArray(a.exports.memory.buffer, b, 4 * w * w), w),
+                d = c.getContext("2d"),
+                r = () => {
+                    a.exports.go();
+                    d.putImageData(i, 0, 0);
+                    requestAnimationFrame(r);
+                };
+            r();
+
+            document.onkeydown = function (event) {
+                let code = 0;
+                switch (event.code) {
+                    case "ArrowLeft":
+                    case "KeyA":
+                        code = 1;
+                        break;
+                    case "ArrowRight":
+                    case "KeyD":
+                        code = 2;
+                        break;
+                    case "ArrowUp":
+                    case "KeyW":
+                        code = 3;
+                        break;
+                    case "ArrowDown":
+                    case "KeyS":
+                        code = 4;
+                        break;
+                }
+
+                a.exports.key_pressed(code);
+            };
+        })();
+    </script>
 </head>
 
-<body><canvas id="canvas"></canvas></body>
+<body>
+    <canvas id="canvas"></canvas>
+</body>
 
 </html>
