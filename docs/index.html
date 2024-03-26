@@ -14,34 +14,57 @@
                 d = c.getContext("2d"),
                 r = () => {
                     a.exports.go();
+                    movePlayer();
                     d.putImageData(i, 0, 0);
                     requestAnimationFrame(r);
                 };
             r();
 
-            document.onkeydown = function (event) {
-                let code = 0;
-                switch (event.code) {
-                    case "ArrowLeft":
-                    case "KeyA":
-                        code = 1;
-                        break;
-                    case "ArrowRight":
-                    case "KeyD":
-                        code = 2;
-                        break;
-                    case "ArrowUp":
-                    case "KeyW":
-                        code = 3;
-                        break;
-                    case "ArrowDown":
-                    case "KeyS":
-                        code = 4;
-                        break;
-                }
 
-                a.exports.key_pressed(code);
+            var keysPressed = {
+                ArrowLeft: false,
+                KeyA: false,
+                ArrowRight: false,
+                KeyD: false,
+                ArrowUp: false,
+                KeyW: false,
+                ArrowDown: false,
+                KeyS: false,
             };
+
+
+            document.addEventListener('keydown', (event) => {
+                if (event.code in keysPressed) {
+                    keysPressed[event.code] = true;
+                }
+            });
+
+
+            document.addEventListener('keyup', (event) => {
+                if (event.code in keysPressed) {
+                    keysPressed[event.code] = false;
+                }
+            });
+
+
+            function movePlayer() {
+                if (!keysPressed) {
+                    return;
+                }
+                if (keysPressed.ArrowLeft || keysPressed.KeyA) {
+                    a.exports.key_pressed(1);
+                }
+                if (keysPressed.ArrowRight || keysPressed.KeyD) {
+                    a.exports.key_pressed(2);
+                }
+                if (keysPressed.ArrowUp || keysPressed.KeyW) {
+                    a.exports.key_pressed(3);
+                }
+                if (keysPressed.ArrowDown || keysPressed.KeyS) {
+                    a.exports.key_pressed(4);
+                }
+            }
+
         })();
     </script>
 </head>
