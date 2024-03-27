@@ -2,8 +2,7 @@
 use core::sync::atomic::{AtomicU32, Ordering};
 static FRAME: AtomicU32 = AtomicU32::new(0);
 
-static SQUARE_POS_X: AtomicU32 = AtomicU32::new(WIDTH as u32 / 2 - 5);
-static SQUARE_POS_Y: AtomicU32 = AtomicU32::new(HEIGHT as u32 / 2 - 5);
+static mut PLAYER: [Option<Player>; 1] = [None; 1];
 
 const MAX_ENEMIES: usize = 600;
 
@@ -12,7 +11,7 @@ static mut ENEMIES: [Option<Enemy>; MAX_ENEMIES] = [ARRAY_REPEAT_VALUE; MAX_ENEM
 
 const WIDTH: usize = 800;
 const HEIGHT: usize = 800;
-const PLAYER_SPEED: u32 = 2;
+const PLAYER_SPEED: usize = 2;
 const ENEMY_SIZE: usize = 15;
 const PLAYER_SIZE: usize = 10;
 
@@ -30,6 +29,20 @@ struct Enemy {
     x: usize,
     y: usize,
     frame_counter: usize,
+}
+
+struct Player {
+    x: usize,
+    y: usize,
+}
+
+impl Player {
+    fn new() -> Self {
+        Player {
+            x: (WIDTH as u32 / 2 - 5) as usize,
+            y: (HEIGHT as u32 / 2 - 5) as usize,
+        }
+    }
 }
 
 pub enum Key {
@@ -63,9 +76,21 @@ impl Rng {
 }
 
 #[no_mangle]
-pub extern "C" fn spawn_enemies() {
-    for _ in 0..100 {
+pub extern "C" fn spawn() {
+    for _ in 0..10 {
         spawn_enemy();
+    }
+
+    spawn_player();
+}
+
+fn spawn_player() {
+    unsafe {
+        for slot in PLAYER.iter_mut() {
+            if slot.is_none() {
+                *slot = Some(Player::new());
+            }
+        }
     }
 }
 
@@ -122,12 +147,15 @@ fn render_frame_safe(buffer: &mut [u32; WIDTH * HEIGHT]) {
         buffer[i] = 0xFF_00_00_00;
     }
 
-    let start_x = SQUARE_POS_X.load(Ordering::Relaxed) as usize;
-    let start_y = SQUARE_POS_Y.load(Ordering::Relaxed) as usize;
-
-    for y in start_y..(start_y + PLAYER_SIZE) {
-        for x in start_x..(start_x + PLAYER_SIZE) {
-            buffer[y * WIDTH + x] = 0xFFFFFF;
+    unsafe {
+        for player in PLAYER.iter() {
+            if let Some(player) = player {
+                for y in player.y..(player.y + PLAYER_SIZE) {
+                    for x in player.x..(player.x + PLAYER_SIZE) {
+                        buffer[y * WIDTH + x] = 0xFFFFFF;
+                    }
+                }
+            }
         }
     }
 
@@ -150,41 +178,44 @@ fn update_enemy_pos() {
     let f = FRAME.fetch_add(1, Ordering::Relaxed);
     let mut rng = Rng::new(123 + f);
 
-    let square_x = SQUARE_POS_X.load(Ordering::Relaxed) as usize;
-    let square_y = SQUARE_POS_Y.load(Ordering::Relaxed) as usize;
-
     if f % 600 == 0 && f < 1337 {
-        spawn_enemies();
+        spawn();
     }
 
     unsafe {
         for slot in ENEMIES.iter_mut() {
-            if let Some(enemy) = slot {
-                if enemy.frame_counter > 0 {
-                    enemy.frame_counter -= 1;
-                }
+            for player in PLAYER.iter() {
+                if let Some(player) = player {
+                    if let Some(enemy) = slot {
+                        if enemy.frame_counter > 0 {
+                            enemy.frame_counter -= 1;
+                        }
 
-                if enemy.frame_counter == 0 {
-                    if enemy.x > square_x {
-                        enemy.x = enemy.x.saturating_sub(1);
-                    } else if enemy.x < square_x {
-                        enemy.x += 1;
+                        if enemy.frame_counter == 0 {
+                            if enemy.x > player.x {
+                                enemy.x = enemy.x.saturating_sub(1);
+                            } else if enemy.x < player.x {
+                                enemy.x += 1;
+                            }
+
+                            if enemy.y > player.y {
+                                enemy.y = enemy.y.saturating_sub(1);
+                            } else if enemy.y < player.y {
+                                enemy.y += 1;
+                            }
+
+                            if (enemy.x >= player.x - PLAYER_SIZE
+                                && enemy.x <= player.x + PLAYER_SIZE)
+                                && (enemy.y >= player.y - PLAYER_SIZE
+                                    && enemy.y <= player.y + PLAYER_SIZE)
+                            {
+                                *slot = None;
+                                continue;
+                            }
+
+                            enemy.frame_counter = rng.rand_in_range(1, 8) as usize;
+                        }
                     }
-
-                    if enemy.y > square_y {
-                        enemy.y = enemy.y.saturating_sub(1);
-                    } else if enemy.y < square_y {
-                        enemy.y += 1;
-                    }
-
-                    if (enemy.x >= square_x - PLAYER_SIZE && enemy.x <= square_x + PLAYER_SIZE)
-                        && (enemy.y >= square_y - PLAYER_SIZE && enemy.y <= square_y + PLAYER_SIZE)
-                    {
-                        *slot = None;
-                        continue;
-                    }
-
-                    enemy.frame_counter = rng.rand_in_range(1, 8) as usize;
                 }
             }
         }
@@ -201,50 +232,30 @@ pub unsafe extern "C" fn key_pressed(value: usize) {
         _ => return,
     };
 
-    match key {
-        Key::Left => {
-            SQUARE_POS_X
-                .fetch_update(Ordering::SeqCst, Ordering::SeqCst, |x| {
-                    if x >= PLAYER_SPEED {
-                        Some(x - PLAYER_SPEED)
-                    } else {
-                        None
+    for player in PLAYER.iter_mut() {
+        if let Some(player) = player {
+            match key {
+                Key::Left => {
+                    if player.x >= PLAYER_SPEED {
+                        player.x -= PLAYER_SPEED;
                     }
-                })
-                .ok();
-        }
-        Key::Right => {
-            SQUARE_POS_X
-                .fetch_update(Ordering::SeqCst, Ordering::SeqCst, |x| {
-                    if x + 10 + PLAYER_SPEED <= WIDTH as u32 {
-                        Some(x + PLAYER_SPEED)
-                    } else {
-                        None
+                }
+                Key::Right => {
+                    if player.x + 10 + PLAYER_SPEED <= WIDTH {
+                        player.x += PLAYER_SPEED;
                     }
-                })
-                .ok();
-        }
-        Key::Up => {
-            SQUARE_POS_Y
-                .fetch_update(Ordering::SeqCst, Ordering::SeqCst, |y| {
-                    if y >= PLAYER_SPEED {
-                        Some(y - PLAYER_SPEED)
-                    } else {
-                        None
+                }
+                Key::Up => {
+                    if player.y >= PLAYER_SPEED {
+                        player.y -= PLAYER_SPEED;
                     }
-                })
-                .ok();
-        }
-        Key::Down => {
-            SQUARE_POS_Y
-                .fetch_update(Ordering::SeqCst, Ordering::SeqCst, |y| {
-                    if y + 10 + PLAYER_SPEED <= HEIGHT as u32 {
-                        Some(y + PLAYER_SPEED)
-                    } else {
-                        None
+                }
+                Key::Down => {
+                    if player.y + 10 + PLAYER_SPEED <= HEIGHT {
+                        player.y += PLAYER_SPEED;
                     }
-                })
-                .ok();
+                }
+            }
         }
     }
 }
