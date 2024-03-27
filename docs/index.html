@@ -13,14 +13,15 @@
                 i = new ImageData(new Uint8ClampedArray(a.exports.memory.buffer, b, 4 * w * w), w),
                 d = c.getContext("2d"),
                 r = () => {
-                    a.exports.go();
+                    const game_loop = a.exports.game_loop();
+                    console.log(game_loop);
                     movePlayer();
                     d.putImageData(i, 0, 0);
                     requestAnimationFrame(r);
                 };
             r();
 
-            a.exports.main();
+            a.exports.spawn_enemies();
 
             var keysPressed = {
                 ArrowLeft: false,
