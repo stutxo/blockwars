@@ -2,35 +2,48 @@
 use core::sync::atomic::{AtomicU32, Ordering};
 static FRAME: AtomicU32 = AtomicU32::new(0);
 
-static mut PLAYER: [Option<Player>; 1] = [None; 1];
-
-const MAX_ENEMIES: usize = 600;
-
-const ARRAY_REPEAT_VALUE: core::option::Option<Enemy> = None;
-static mut ENEMIES: [Option<Enemy>; MAX_ENEMIES] = [ARRAY_REPEAT_VALUE; MAX_ENEMIES];
-
 const WIDTH: usize = 800;
 const HEIGHT: usize = 800;
 const PLAYER_SPEED: usize = 2;
 const ENEMY_SIZE: usize = 15;
 const PLAYER_SIZE: usize = 10;
 
+static mut GAME_OVER: bool = false;
+
 #[no_mangle]
 static mut BUFFER: [u32; WIDTH * HEIGHT] = [0; WIDTH * HEIGHT];
 
 #[no_mangle]
 pub unsafe extern "C" fn game_loop() -> u32 {
-    update_enemy_pos();
-    render_frame_safe(&mut BUFFER);
-    1
+    if !GAME_OVER {
+        update_enemy_pos();
+        render_frame_safe(&mut BUFFER);
+        1
+    } else {
+        0
+    }
 }
 
+const MAX_ENEMIES: usize = 600;
+const ARRAY_REPEAT_VALUE: core::option::Option<Enemy> = None;
+static mut ENEMIES: [Option<Enemy>; MAX_ENEMIES] = [ARRAY_REPEAT_VALUE; MAX_ENEMIES];
 struct Enemy {
     x: usize,
     y: usize,
     frame_counter: usize,
 }
 
+impl Enemy {
+    fn new(x: usize, y: usize) -> Self {
+        Enemy {
+            x,
+            y,
+            frame_counter: 0,
+        }
+    }
+}
+
+static mut PLAYER: [Option<Player>; 1] = [None; 1];
 struct Player {
     x: usize,
     y: usize,
@@ -101,41 +114,21 @@ fn spawn_enemy() {
 
         for slot in ENEMIES.iter_mut() {
             if slot.is_none() {
-                match rng.rand() % 4 {
-                    0 => {
-                        let x = rng.rand() % (WIDTH as u32 - ENEMY_SIZE as u32);
-                        *slot = Some(Enemy {
-                            x: x as usize,
-                            y: 0,
-                            frame_counter: 0,
-                        });
-                    }
-                    1 => {
-                        let y = rng.rand() % (HEIGHT as u32 - ENEMY_SIZE as u32);
-                        *slot = Some(Enemy {
-                            x: WIDTH - ENEMY_SIZE as usize,
-                            y: y as usize,
-                            frame_counter: 0,
-                        });
-                    }
-                    2 => {
-                        let x = rng.rand() % (WIDTH as u32 - ENEMY_SIZE as u32);
-                        *slot = Some(Enemy {
-                            x: x as usize,
-                            y: HEIGHT - ENEMY_SIZE as usize,
-                            frame_counter: 0,
-                        });
-                    }
-                    3 => {
-                        let y = rng.rand() % (HEIGHT as u32 - ENEMY_SIZE as u32);
-                        *slot = Some(Enemy {
-                            x: 0,
-                            y: y as usize,
-                            frame_counter: 0,
-                        });
-                    }
-                    _ => {}
-                }
+                let position = match rng.rand() % 4 {
+                    0 => (rng.rand() % (WIDTH as u32 - ENEMY_SIZE as u32), 0),
+                    1 => (
+                        WIDTH as u32 - ENEMY_SIZE as u32,
+                        rng.rand() % (HEIGHT as u32 - ENEMY_SIZE as u32),
+                    ),
+                    2 => (
+                        rng.rand() % (WIDTH as u32 - ENEMY_SIZE as u32),
+                        HEIGHT as u32 - ENEMY_SIZE as u32,
+                    ),
+                    3 => (0, rng.rand() % (HEIGHT as u32 - ENEMY_SIZE as u32)),
+                    _ => continue,
+                };
+
+                *slot = Some(Enemy::new(position.0 as usize, position.1 as usize));
                 break;
             }
         }
@@ -209,8 +202,7 @@ fn update_enemy_pos() {
                                 && (enemy.y >= player.y - PLAYER_SIZE
                                     && enemy.y <= player.y + PLAYER_SIZE)
                             {
-                                *slot = None;
-                                continue;
+                                GAME_OVER = true;
                             }
 
                             enemy.frame_counter = rng.rand_in_range(1, 8) as usize;
