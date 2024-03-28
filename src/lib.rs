@@ -7,7 +7,7 @@ const HEIGHT: usize = 800;
 const PLAYER_SPEED: usize = 2;
 const ENEMY_SIZE: usize = 15;
 const PLAYER_SIZE: usize = 10;
-const wall_SIZE: usize = 3;
+const WALL_SIZE: usize = 3;
 
 static mut GAME_OVER: bool = false;
 
@@ -181,8 +181,8 @@ fn render_frame_safe(buffer: &mut [u32; WIDTH * HEIGHT]) {
     unsafe {
         for wall_entity in WALL.iter() {
             if let Some(wall) = wall_entity {
-                for y in wall.y..(wall.y + wall_SIZE) {
-                    for x in wall.x..(wall.x + wall_SIZE) {
+                for y in wall.y..(wall.y + WALL_SIZE) {
+                    for x in wall.x..(wall.x + WALL_SIZE) {
                         buffer[y * WIDTH + x] = 0xFFFFFF;
                     }
                 }
@@ -259,9 +259,9 @@ fn update_enemy_pos() {
                         // Check for overlap in both the X and Y directions.
                         // Considering the size of the enemy and the wall for collision detection.
 
-                        if enemy.x < wall.x + wall_SIZE
+                        if enemy.x < wall.x + WALL_SIZE
                             && enemy.x + ENEMY_SIZE > wall.x
-                            && enemy.y < wall.y + wall_SIZE
+                            && enemy.y < wall.y + WALL_SIZE
                             && enemy.y + ENEMY_SIZE > wall.y
                         {
                             // Collision detected, remove the wall by setting it to None.
