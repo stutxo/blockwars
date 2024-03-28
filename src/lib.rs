@@ -8,6 +8,7 @@ const PLAYER_SPEED: usize = 2;
 const ENEMY_SIZE: usize = 15;
 const PLAYER_SIZE: usize = 10;
 const WALL_SIZE: usize = 3;
+const SEED: u32 = 0x1337;
 
 static mut GAME_OVER: bool = false;
 
@@ -60,16 +61,16 @@ impl Player {
 }
 
 const MAX_WALL: usize = 500;
-const WALL_NONE: core::option::Option<wall> = None;
-static mut WALL: [Option<wall>; MAX_WALL] = [WALL_NONE; MAX_WALL];
-struct wall {
+const WALL_NONE: core::option::Option<Wall> = None;
+static mut WALL: [Option<Wall>; MAX_WALL] = [WALL_NONE; MAX_WALL];
+struct Wall {
     x: usize,
     y: usize,
 }
 
-impl wall {
+impl Wall {
     fn new(x: usize, y: usize) -> Self {
-        wall { x, y }
+        Wall { x, y }
     }
 }
 
@@ -126,7 +127,7 @@ fn spawn_wall(x: usize, y: usize) {
     unsafe {
         for slot in WALL.iter_mut() {
             if slot.is_none() {
-                *slot = Some(wall::new(x, y));
+                *slot = Some(Wall::new(x, y));
                 break;
             }
         }
@@ -136,7 +137,7 @@ fn spawn_wall(x: usize, y: usize) {
 fn spawn_enemy() {
     unsafe {
         let f = FRAME.fetch_add(1, Ordering::Relaxed);
-        let mut rng = Rng::new(123 + f);
+        let mut rng = Rng::new(SEED + f);
 
         for slot in ENEMIES.iter_mut() {
             if slot.is_none() {
@@ -207,7 +208,7 @@ fn render_frame_safe(buffer: &mut [u32; WIDTH * HEIGHT]) {
 
 fn update_enemy_pos() {
     let f = FRAME.fetch_add(1, Ordering::Relaxed);
-    let mut rng = Rng::new(123 + f);
+    let mut rng = Rng::new(SEED + f);
 
     if f % 600 == 0 && f < 1337 {
         spawn();
