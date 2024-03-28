@@ -7,7 +7,7 @@ const HEIGHT: usize = 800;
 const PLAYER_SPEED: usize = 2;
 const ENEMY_SIZE: usize = 15;
 const PLAYER_SIZE: usize = 10;
-const BULLET_SIZE: usize = 3;
+const wall_SIZE: usize = 3;
 
 static mut GAME_OVER: bool = false;
 
@@ -59,17 +59,17 @@ impl Player {
     }
 }
 
-const MAX_BULLETS: usize = 500;
-const BULLETS_NONE: core::option::Option<Bullet> = None;
-static mut BULLETS: [Option<Bullet>; MAX_BULLETS] = [BULLETS_NONE; MAX_BULLETS];
-struct Bullet {
+const MAX_WALL: usize = 500;
+const WALL_NONE: core::option::Option<wall> = None;
+static mut WALL: [Option<wall>; MAX_WALL] = [WALL_NONE; MAX_WALL];
+struct wall {
     x: usize,
     y: usize,
 }
 
-impl Bullet {
+impl wall {
     fn new(x: usize, y: usize) -> Self {
-        Bullet { x, y }
+        wall { x, y }
     }
 }
 
@@ -122,11 +122,11 @@ fn spawn_player() {
     }
 }
 
-fn spawn_bullet(x: usize, y: usize) {
+fn spawn_wall(x: usize, y: usize) {
     unsafe {
-        for slot in BULLETS.iter_mut() {
+        for slot in WALL.iter_mut() {
             if slot.is_none() {
-                *slot = Some(Bullet::new(x, y));
+                *slot = Some(wall::new(x, y));
                 break;
             }
         }
@@ -179,10 +179,10 @@ fn render_frame_safe(buffer: &mut [u32; WIDTH * HEIGHT]) {
     }
 
     unsafe {
-        for bullet_entity in BULLETS.iter() {
-            if let Some(bullet) = bullet_entity {
-                for y in bullet.y..(bullet.y + BULLET_SIZE) {
-                    for x in bullet.x..(bullet.x + BULLET_SIZE) {
+        for wall_entity in WALL.iter() {
+            if let Some(wall) = wall_entity {
+                for y in wall.y..(wall.y + wall_SIZE) {
+                    for x in wall.x..(wall.x + wall_SIZE) {
                         buffer[y * WIDTH + x] = 0xFFFFFF;
                     }
                 }
@@ -252,20 +252,20 @@ fn update_enemy_pos() {
 
         for enemy_entity in ENEMIES.iter_mut() {
             if let Some(enemy) = enemy_entity {
-                // Iterate through all bullets to check for collisions.
+                // Iterate through all WALL to check for collisions.
                 let mut enemy_hit = false;
-                for bullet_entity in BULLETS.iter_mut() {
-                    if let Some(bullet) = bullet_entity {
+                for wall_entity in WALL.iter_mut() {
+                    if let Some(wall) = wall_entity {
                         // Check for overlap in both the X and Y directions.
-                        // Considering the size of the enemy and the bullet for collision detection.
+                        // Considering the size of the enemy and the wall for collision detection.
 
-                        if enemy.x < bullet.x + BULLET_SIZE
-                            && enemy.x + ENEMY_SIZE > bullet.x
-                            && enemy.y < bullet.y + BULLET_SIZE
-                            && enemy.y + ENEMY_SIZE > bullet.y
+                        if enemy.x < wall.x + wall_SIZE
+                            && enemy.x + ENEMY_SIZE > wall.x
+                            && enemy.y < wall.y + wall_SIZE
+                            && enemy.y + ENEMY_SIZE > wall.y
                         {
-                            // Collision detected, remove the bullet by setting it to None.
-                            *bullet_entity = None;
+                            // Collision detected, remove the wall by setting it to None.
+                            *wall_entity = None;
                             enemy_hit = true;
                         }
                     }
@@ -313,7 +313,7 @@ pub unsafe extern "C" fn key_pressed(value: usize) {
                     }
                 }
             }
-            spawn_bullet(player.x + 5, player.y + 5);
+            spawn_wall(player.x + 5, player.y + 5);
         }
     }
 }
