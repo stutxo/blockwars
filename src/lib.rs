@@ -7,6 +7,7 @@ const HEIGHT: usize = 800;
 const PLAYER_SPEED: usize = 2;
 const ENEMY_SIZE: usize = 15;
 const PLAYER_SIZE: usize = 10;
+const BULLET_SIZE: usize = 3;
 
 static mut GAME_OVER: bool = false;
 
@@ -25,8 +26,8 @@ pub unsafe extern "C" fn game_loop() -> u32 {
 }
 
 const MAX_ENEMIES: usize = 600;
-const ARRAY_REPEAT_VALUE: core::option::Option<Enemy> = None;
-static mut ENEMIES: [Option<Enemy>; MAX_ENEMIES] = [ARRAY_REPEAT_VALUE; MAX_ENEMIES];
+const ENEMIES_NONE: core::option::Option<Enemy> = None;
+static mut ENEMIES: [Option<Enemy>; MAX_ENEMIES] = [ENEMIES_NONE; MAX_ENEMIES];
 struct Enemy {
     x: usize,
     y: usize,
@@ -55,6 +56,20 @@ impl Player {
             x: (WIDTH as u32 / 2 - 5) as usize,
             y: (HEIGHT as u32 / 2 - 5) as usize,
         }
+    }
+}
+
+const MAX_BULLETS: usize = 500;
+const BULLETS_NONE: core::option::Option<Bullet> = None;
+static mut BULLETS: [Option<Bullet>; MAX_BULLETS] = [BULLETS_NONE; MAX_BULLETS];
+struct Bullet {
+    x: usize,
+    y: usize,
+}
+
+impl Bullet {
+    fn new(x: usize, y: usize) -> Self {
+        Bullet { x, y }
     }
 }
 
@@ -90,7 +105,7 @@ impl Rng {
 
 #[no_mangle]
 pub extern "C" fn spawn() {
-    for _ in 0..10 {
+    for _ in 0..21 {
         spawn_enemy();
     }
 
@@ -102,6 +117,17 @@ fn spawn_player() {
         for slot in PLAYER.iter_mut() {
             if slot.is_none() {
                 *slot = Some(Player::new());
+            }
+        }
+    }
+}
+
+fn spawn_bullet(x: usize, y: usize) {
+    unsafe {
+        for slot in BULLETS.iter_mut() {
+            if slot.is_none() {
+                *slot = Some(Bullet::new(x, y));
+                break;
             }
         }
     }
@@ -141,8 +167,8 @@ fn render_frame_safe(buffer: &mut [u32; WIDTH * HEIGHT]) {
     }
 
     unsafe {
-        for player in PLAYER.iter() {
-            if let Some(player) = player {
+        for player_entity in PLAYER.iter() {
+            if let Some(player) = player_entity {
                 for y in player.y..(player.y + PLAYER_SIZE) {
                     for x in player.x..(player.x + PLAYER_SIZE) {
                         buffer[y * WIDTH + x] = 0xFFFFFF;
@@ -153,8 +179,20 @@ fn render_frame_safe(buffer: &mut [u32; WIDTH * HEIGHT]) {
     }
 
     unsafe {
-        for enemy_option in ENEMIES.iter() {
-            if let Some(enemy) = enemy_option {
+        for bullet_entity in BULLETS.iter() {
+            if let Some(bullet) = bullet_entity {
+                for y in bullet.y..(bullet.y + BULLET_SIZE) {
+                    for x in bullet.x..(bullet.x + BULLET_SIZE) {
+                        buffer[y * WIDTH + x] = 0xFFFFFF;
+                    }
+                }
+            }
+        }
+    }
+
+    unsafe {
+        for enemy_entity in ENEMIES.iter() {
+            if let Some(enemy) = enemy_entity {
                 for y in enemy.y..(enemy.y + ENEMY_SIZE) {
                     for x in enemy.x..(enemy.x + ENEMY_SIZE) {
                         if x < WIDTH && y < HEIGHT {
@@ -167,6 +205,8 @@ fn render_frame_safe(buffer: &mut [u32; WIDTH * HEIGHT]) {
     }
 }
 
+fn update_bullets() {}
+
 fn update_enemy_pos() {
     let f = FRAME.fetch_add(1, Ordering::Relaxed);
     let mut rng = Rng::new(123 + f);
@@ -176,10 +216,10 @@ fn update_enemy_pos() {
     }
 
     unsafe {
-        for slot in ENEMIES.iter_mut() {
-            for player in PLAYER.iter() {
-                if let Some(player) = player {
-                    if let Some(enemy) = slot {
+        for enemy_entity in ENEMIES.iter_mut() {
+            for player_entity in PLAYER.iter() {
+                if let Some(player) = player_entity {
+                    if let Some(enemy) = enemy_entity {
                         if enemy.frame_counter > 0 {
                             enemy.frame_counter -= 1;
                         }
@@ -208,6 +248,33 @@ fn update_enemy_pos() {
                             enemy.frame_counter = rng.rand_in_range(1, 8) as usize;
                         }
                     }
+                }
+            }
+        }
+
+        for enemy_entity in ENEMIES.iter_mut() {
+            if let Some(enemy) = enemy_entity {
+                // Iterate through all bullets to check for collisions.
+                let mut enemy_hit = false;
+                for bullet_entity in BULLETS.iter_mut() {
+                    if let Some(bullet) = bullet_entity {
+                        // Check for overlap in both the X and Y directions.
+                        // Considering the size of the enemy and the bullet for collision detection.
+
+                        if enemy.x < bullet.x + BULLET_SIZE
+                            && enemy.x + ENEMY_SIZE > bullet.x
+                            && enemy.y < bullet.y + BULLET_SIZE
+                            && enemy.y + ENEMY_SIZE > bullet.y
+                        {
+                            // Collision detected, remove the bullet by setting it to None.
+                            *bullet_entity = None;
+                            enemy_hit = true;
+                        }
+                    }
+                }
+                if enemy_hit {
+                    *enemy_entity = None;
+                    break;
                 }
             }
         }
@@ -248,6 +315,7 @@ pub unsafe extern "C" fn key_pressed(value: usize) {
                     }
                 }
             }
+            spawn_bullet(player.x + 5, player.y + 5);
         }
     }
 }
