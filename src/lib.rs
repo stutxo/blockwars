@@ -5,10 +5,10 @@ static FRAME: AtomicU32 = AtomicU32::new(0);
 const WIDTH: usize = 800;
 const HEIGHT: usize = 800;
 const PLAYER_SPEED: usize = 2;
-const ENEMY_SIZE: usize = 15;
+const ENEMY_SIZE: usize = 5;
 const PLAYER_SIZE: usize = 10;
 const WALL_SIZE: usize = 3;
-const SEED: u32 = 0x1337;
+const SEED: u32 = 0x1331;
 
 static mut GAME_OVER: bool = false;
 
@@ -26,7 +26,7 @@ pub unsafe extern "C" fn game_loop() -> u32 {
     }
 }
 
-const MAX_ENEMIES: usize = 600;
+const MAX_ENEMIES: usize = 2000;
 const ENEMIES_NONE: core::option::Option<Enemy> = None;
 static mut ENEMIES: [Option<Enemy>; MAX_ENEMIES] = [ENEMIES_NONE; MAX_ENEMIES];
 struct Enemy {
@@ -106,7 +106,7 @@ impl Rng {
 
 #[no_mangle]
 pub extern "C" fn spawn() {
-    for _ in 0..21 {
+    for _ in 0..50 {
         spawn_enemy();
     }
 
@@ -236,10 +236,10 @@ fn update_enemy_pos() {
                                 enemy.y += 1;
                             }
 
-                            if (enemy.x >= player.x - PLAYER_SIZE
-                                && enemy.x <= player.x + PLAYER_SIZE)
-                                && (enemy.y >= player.y - PLAYER_SIZE
-                                    && enemy.y <= player.y + PLAYER_SIZE)
+                            if (enemy.x >= player.x - ENEMY_SIZE
+                                && enemy.x <= player.x + ENEMY_SIZE)
+                                && (enemy.y >= player.y - ENEMY_SIZE
+                                    && enemy.y <= player.y + ENEMY_SIZE)
                             {
                                 GAME_OVER = true;
                             }
