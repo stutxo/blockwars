@@ -205,8 +205,6 @@ fn render_frame_safe(buffer: &mut [u32; WIDTH * HEIGHT]) {
     }
 }
 
-fn update_bullets() {}
-
 fn update_enemy_pos() {
     let f = FRAME.fetch_add(1, Ordering::Relaxed);
     let mut rng = Rng::new(123 + f);
