@@ -253,19 +253,14 @@ fn update_enemy_pos() {
 
         for enemy_entity in ENEMIES.iter_mut() {
             if let Some(enemy) = enemy_entity {
-                // Iterate through all WALL to check for collisions.
                 let mut enemy_hit = false;
                 for wall_entity in WALL.iter_mut() {
                     if let Some(wall) = wall_entity {
-                        // Check for overlap in both the X and Y directions.
-                        // Considering the size of the enemy and the wall for collision detection.
-
                         if enemy.x < wall.x + WALL_SIZE
                             && enemy.x + ENEMY_SIZE > wall.x
                             && enemy.y < wall.y + WALL_SIZE
                             && enemy.y + ENEMY_SIZE > wall.y
                         {
-                            // Collision detected, remove the wall by setting it to None.
                             *wall_entity = None;
                             enemy_hit = true;
                         }
