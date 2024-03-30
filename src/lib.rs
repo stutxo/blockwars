@@ -1,6 +1,5 @@
 #![no_std]
-use core::sync::atomic::{AtomicU32, Ordering};
-static FRAME: AtomicU32 = AtomicU32::new(0);
+use core::sync::atomic::{AtomicBool, AtomicU32, AtomicUsize, Ordering};
 
 const WIDTH: usize = 800;
 const HEIGHT: usize = 800;
@@ -9,26 +8,20 @@ const ENEMY_SIZE: usize = 5;
 const PLAYER_SIZE: usize = 10;
 const WALL_SIZE: usize = 3;
 const SEED: u32 = 0x1331;
-
-static mut GAME_OVER: bool = false;
-
-#[no_mangle]
-static mut BUFFER: [u32; WIDTH * HEIGHT] = [0; WIDTH * HEIGHT];
-
-#[no_mangle]
-pub unsafe extern "C" fn game_loop() -> u32 {
-    if !GAME_OVER {
-        update_enemy_pos();
-        render_frame_safe(&mut BUFFER);
-        1
-    } else {
-        0
-    }
-}
-
-const MAX_ENEMIES: usize = 2000;
+const ENEMIES_PER_WAVE: u32 = 5;
+const MAX_ENEMIES: usize = 1000;
 const ENEMIES_NONE: core::option::Option<Enemy> = None;
+const MAX_WALL: usize = 30000;
+const WALL_NONE: core::option::Option<Wall> = None;
+
+static mut PLAYER: [Option<Player>; 1] = [None; 1];
 static mut ENEMIES: [Option<Enemy>; MAX_ENEMIES] = [ENEMIES_NONE; MAX_ENEMIES];
+static mut WALL: [Option<Wall>; MAX_WALL] = [WALL_NONE; MAX_WALL];
+
+static GAME_OVER: AtomicBool = AtomicBool::new(false);
+static FRAME: AtomicU32 = AtomicU32::new(0);
+static KEY_STATE: AtomicUsize = AtomicUsize::new(0);
+
 struct Enemy {
     x: usize,
     y: usize,
@@ -45,7 +38,6 @@ impl Enemy {
     }
 }
 
-static mut PLAYER: [Option<Player>; 1] = [None; 1];
 struct Player {
     x: usize,
     y: usize,
@@ -60,9 +52,6 @@ impl Player {
     }
 }
 
-const MAX_WALL: usize = 500;
-const WALL_NONE: core::option::Option<Wall> = None;
-static mut WALL: [Option<Wall>; MAX_WALL] = [WALL_NONE; MAX_WALL];
 struct Wall {
     x: usize,
     y: usize,
@@ -105,41 +94,53 @@ impl Rng {
 }
 
 #[no_mangle]
-pub extern "C" fn spawn() {
-    for _ in 0..50 {
-        spawn_enemy();
-    }
+static mut BUFFER: [u32; WIDTH * HEIGHT] = [0; WIDTH * HEIGHT];
 
-    spawn_player();
+#[no_mangle]
+pub unsafe extern "C" fn key_pressed(value: usize) {
+    KEY_STATE.store(value, Ordering::Relaxed);
 }
 
-fn spawn_player() {
-    unsafe {
-        for slot in PLAYER.iter_mut() {
-            if slot.is_none() {
-                *slot = Some(Player::new());
-            }
+#[no_mangle]
+pub unsafe extern "C" fn game_loop() -> u32 {
+    if !GAME_OVER.load(Ordering::Relaxed) {
+        frame_safe(&mut BUFFER, &mut ENEMIES, &mut PLAYER, &mut WALL);
+        1
+    } else {
+        0
+    }
+}
+
+fn frame_safe(
+    buffer: &mut [u32; WIDTH * HEIGHT],
+    enemies: &mut [Option<Enemy>; MAX_ENEMIES],
+    player: &mut [Option<Player>; 1],
+    wall: &mut [Option<Wall>; MAX_WALL],
+) {
+    let f = FRAME.fetch_add(1, Ordering::Relaxed);
+    let mut rng = Rng::new(SEED + f);
+    if player[0].is_none() {
+        spawn_player(player);
+    }
+    if f % 3 == 0 && f < 1337 {
+        spawn_enemy(enemies, &mut rng);
+    }
+    update_player_pos(player, wall);
+    update_enemy_pos(enemies, player, wall, &mut rng);
+    render_frame(buffer, enemies, player, wall);
+}
+
+fn spawn_player(player: &mut [Option<Player>; 1]) {
+    for slot in player.iter_mut() {
+        if slot.is_none() {
+            *slot = Some(Player::new());
         }
     }
 }
 
-fn spawn_wall(x: usize, y: usize) {
-    unsafe {
-        for slot in WALL.iter_mut() {
-            if slot.is_none() {
-                *slot = Some(Wall::new(x, y));
-                break;
-            }
-        }
-    }
-}
-
-fn spawn_enemy() {
-    unsafe {
-        let f = FRAME.fetch_add(1, Ordering::Relaxed);
-        let mut rng = Rng::new(SEED + f);
-
-        for slot in ENEMIES.iter_mut() {
+fn spawn_enemy(enemies: &mut [Option<Enemy>; MAX_ENEMIES], rng: &mut Rng) {
+    for _ in 0..ENEMIES_PER_WAVE {
+        for slot in enemies.iter_mut() {
             if slot.is_none() {
                 let position = match rng.rand() % 4 {
                     0 => (rng.rand() % (WIDTH as u32 - ENEMY_SIZE as u32), 0),
@@ -162,122 +163,9 @@ fn spawn_enemy() {
     }
 }
 
-fn render_frame_safe(buffer: &mut [u32; WIDTH * HEIGHT]) {
-    for i in 0..(WIDTH * HEIGHT) {
-        buffer[i] = 0xFF_00_00_00;
-    }
-
-    unsafe {
-        for player_entity in PLAYER.iter() {
-            if let Some(player) = player_entity {
-                for y in player.y..(player.y + PLAYER_SIZE) {
-                    for x in player.x..(player.x + PLAYER_SIZE) {
-                        buffer[y * WIDTH + x] = 0xFFFFFF;
-                    }
-                }
-            }
-        }
-    }
-
-    unsafe {
-        for wall_entity in WALL.iter() {
-            if let Some(wall) = wall_entity {
-                for y in wall.y..(wall.y + WALL_SIZE) {
-                    for x in wall.x..(wall.x + WALL_SIZE) {
-                        buffer[y * WIDTH + x] = 0xFFFFFF;
-                    }
-                }
-            }
-        }
-    }
-
-    unsafe {
-        for enemy_entity in ENEMIES.iter() {
-            if let Some(enemy) = enemy_entity {
-                for y in enemy.y..(enemy.y + ENEMY_SIZE) {
-                    for x in enemy.x..(enemy.x + ENEMY_SIZE) {
-                        if x < WIDTH && y < HEIGHT {
-                            buffer[y * WIDTH + x] = 0xFFFFBF00;
-                        }
-                    }
-                }
-            }
-        }
-    }
-}
-
-fn update_enemy_pos() {
-    let f = FRAME.fetch_add(1, Ordering::Relaxed);
-    let mut rng = Rng::new(SEED + f);
-
-    if f % 600 == 0 && f < 1337 {
-        spawn();
-    }
-
-    unsafe {
-        for enemy_entity in ENEMIES.iter_mut() {
-            for player_entity in PLAYER.iter() {
-                if let Some(player) = player_entity {
-                    if let Some(enemy) = enemy_entity {
-                        if enemy.frame_counter > 0 {
-                            enemy.frame_counter -= 1;
-                        }
-
-                        if enemy.frame_counter == 0 {
-                            if enemy.x > player.x {
-                                enemy.x = enemy.x.saturating_sub(1);
-                            } else if enemy.x < player.x {
-                                enemy.x += 1;
-                            }
-
-                            if enemy.y > player.y {
-                                enemy.y = enemy.y.saturating_sub(1);
-                            } else if enemy.y < player.y {
-                                enemy.y += 1;
-                            }
-
-                            if (enemy.x >= player.x - ENEMY_SIZE
-                                && enemy.x <= player.x + ENEMY_SIZE)
-                                && (enemy.y >= player.y - ENEMY_SIZE
-                                    && enemy.y <= player.y + ENEMY_SIZE)
-                            {
-                                GAME_OVER = true;
-                            }
-
-                            enemy.frame_counter = rng.rand_in_range(1, 8) as usize;
-                        }
-                    }
-                }
-            }
-        }
-
-        for enemy_entity in ENEMIES.iter_mut() {
-            if let Some(enemy) = enemy_entity {
-                let mut enemy_hit = false;
-                for wall_entity in WALL.iter_mut() {
-                    if let Some(wall) = wall_entity {
-                        if enemy.x < wall.x + WALL_SIZE
-                            && enemy.x + ENEMY_SIZE > wall.x
-                            && enemy.y < wall.y + WALL_SIZE
-                            && enemy.y + ENEMY_SIZE > wall.y
-                        {
-                            *wall_entity = None;
-                            enemy_hit = true;
-                        }
-                    }
-                }
-                if enemy_hit {
-                    *enemy_entity = None;
-                    break;
-                }
-            }
-        }
-    }
-}
-
-#[no_mangle]
-pub unsafe extern "C" fn key_pressed(value: usize) {
-    let key = match value {
+fn update_player_pos(player: &mut [Option<Player>; 1], wall: &mut [Option<Wall>; MAX_WALL]) {
+    let key_press = KEY_STATE.load(Ordering::Relaxed);
+    let key = match key_press {
         1 => Key::Left,
         2 => Key::Right,
         3 => Key::Up,
@@ -285,7 +173,7 @@ pub unsafe extern "C" fn key_pressed(value: usize) {
         _ => return,
     };
 
-    for player in PLAYER.iter_mut() {
+    for player in player.iter_mut() {
         if let Some(player) = player {
             match key {
                 Key::Left => {
@@ -309,7 +197,124 @@ pub unsafe extern "C" fn key_pressed(value: usize) {
                     }
                 }
             }
-            spawn_wall(player.x + 5, player.y + 5);
+
+            for slot in wall.iter_mut() {
+                if slot.is_none() {
+                    *slot = Some(Wall::new(
+                        player.x + PLAYER_SIZE / 2,
+                        player.y + PLAYER_SIZE / 2,
+                    ));
+                    break;
+                }
+            }
+        }
+    }
+}
+
+fn update_enemy_pos(
+    enemies: &mut [Option<Enemy>; MAX_ENEMIES],
+    player: &mut [Option<Player>; 1],
+    wall: &mut [Option<Wall>; MAX_WALL],
+    rng: &mut Rng,
+) {
+    for enemy_entity in enemies.iter_mut() {
+        for player_entity in player.iter() {
+            if let Some(player) = player_entity {
+                if let Some(enemy) = enemy_entity {
+                    if enemy.frame_counter > 0 {
+                        enemy.frame_counter -= 1;
+                    }
+
+                    if enemy.frame_counter == 0 {
+                        if enemy.x > player.x {
+                            enemy.x = enemy.x.saturating_sub(1);
+                        } else if enemy.x < player.x {
+                            enemy.x += 1;
+                        }
+
+                        if enemy.y > player.y {
+                            enemy.y = enemy.y.saturating_sub(1);
+                        } else if enemy.y < player.y {
+                            enemy.y += 1;
+                        }
+
+                        if (enemy.x < player.x + PLAYER_SIZE)
+                            && (enemy.x + ENEMY_SIZE > player.x)
+                            && (enemy.y < player.y + PLAYER_SIZE)
+                            && (enemy.y + ENEMY_SIZE > player.y)
+                        {
+                            GAME_OVER.store(true, Ordering::Relaxed);
+                        }
+
+                        enemy.frame_counter = rng.rand_in_range(1, 8) as usize;
+                    }
+                }
+            }
+        }
+    }
+
+    for enemy_entity in enemies.iter_mut() {
+        if let Some(enemy) = enemy_entity {
+            let mut enemy_hit = false;
+            for wall_entity in wall.iter_mut() {
+                if let Some(wall) = wall_entity {
+                    if enemy.x < wall.x + WALL_SIZE
+                        && enemy.x + ENEMY_SIZE > wall.x
+                        && enemy.y < wall.y + WALL_SIZE
+                        && enemy.y + ENEMY_SIZE > wall.y
+                    {
+                        *wall_entity = None;
+                        enemy_hit = true;
+                    }
+                }
+            }
+            if enemy_hit {
+                *enemy_entity = None;
+                break;
+            }
+        }
+    }
+}
+
+fn render_frame(
+    buffer: &mut [u32; WIDTH * HEIGHT],
+    enemies: &[Option<Enemy>; MAX_ENEMIES],
+    player: &[Option<Player>; 1],
+    wall: &[Option<Wall>; MAX_WALL],
+) {
+    for i in 0..(WIDTH * HEIGHT) {
+        buffer[i] = 0xFF_00_00_00;
+    }
+
+    for player_entity in player.iter() {
+        if let Some(player) = player_entity {
+            for y in player.y..(player.y + PLAYER_SIZE) {
+                for x in player.x..(player.x + PLAYER_SIZE) {
+                    buffer[y * WIDTH + x] = 0xFFFFFF;
+                }
+            }
+        }
+    }
+
+    for wall_entity in wall.iter() {
+        if let Some(wall) = wall_entity {
+            for y in wall.y..(wall.y + WALL_SIZE) {
+                for x in wall.x..(wall.x + WALL_SIZE) {
+                    buffer[y * WIDTH + x] = 0xFFFFFF;
+                }
+            }
+        }
+    }
+
+    for enemy_entity in enemies.iter() {
+        if let Some(enemy) = enemy_entity {
+            for y in enemy.y..(enemy.y + ENEMY_SIZE) {
+                for x in enemy.x..(enemy.x + ENEMY_SIZE) {
+                    if x < WIDTH && y < HEIGHT {
+                        buffer[y * WIDTH + x] = 0xFFFFBF00;
+                    }
+                }
+            }
         }
     }
 }

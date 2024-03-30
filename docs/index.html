@@ -9,6 +9,7 @@
                 c = document.getElementById("canvas");
             c.width = w;
             c.height = w;
+            // a.exports.new();
             const b = a.exports.BUFFER.value,
                 i = new ImageData(new Uint8ClampedArray(a.exports.memory.buffer, b, 4 * w * w), w),
                 d = c.getContext("2d"),
@@ -21,7 +22,6 @@
                 };
             r();
 
-            a.exports.spawn();
 
             var keysPressed = {
                 ArrowLeft: false,
