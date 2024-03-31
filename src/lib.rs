@@ -1,5 +1,8 @@
 #![no_std]
-use core::sync::atomic::{AtomicBool, AtomicU32, AtomicU8, Ordering};
+use core::{
+    ptr,
+    sync::atomic::{AtomicBool, AtomicU32, AtomicU8, Ordering},
+};
 
 const WIDTH: u8 = 255;
 const HEIGHT: u8 = 255;
@@ -8,10 +11,10 @@ const ENEMY_SIZE: u8 = 5;
 const PLAYER_SIZE: u8 = 5;
 const WALL_SIZE: u8 = 2;
 const SEED: u32 = 0x1331;
-const ENEMIES_PER_WAVE: u8 = 3;
-const MAX_ENEMIES: usize = 9;
+const ENEMIES_PER_WAVE: u8 = 255;
+const MAX_ENEMIES: usize = 1000000;
 const ENEMIES_NONE: core::option::Option<(u8, u8, u8)> = None;
-const MAX_WALL: usize = 100;
+const MAX_WALL: usize = 10000;
 const WALL_NONE: core::option::Option<(u8, u8, u8)> = None;
 
 static mut PLAYER: [Option<(u8, u8)>; 1] = [None; 1];
@@ -37,37 +40,23 @@ fn new_wall(x: u8, y: u8) -> (u8, u8, u8) {
     (x, y, 0)
 }
 
-pub enum Key {
+enum Key {
     Left,
     Right,
     Up,
     Down,
 }
 
-struct Rng {
-    seed: u32,
-}
-
-impl Rng {
-    const A: u32 = 1664525;
-    const C: u32 = 1013904223;
-    const M: u32 = 2_u32.pow(31);
-
-    #[inline]
-    fn new(seed: u32) -> Self {
-        Rng { seed }
-    }
-
-    #[inline]
-    fn rand(&mut self) -> u32 {
-        self.seed = (Self::A.wrapping_mul(self.seed) + Self::C) % Self::M;
-        self.seed
-    }
-
-    #[inline]
-    fn rand_in_range(&mut self, start: u32, end: u32) -> u32 {
-        start + (self.rand() % (end - start + 1))
-    }
+//https://blog.orhun.dev/zero-deps-random-in-rust/
+fn rng() -> impl Iterator<Item = u32> {
+    let f = FRAME.fetch_add(1, Ordering::Relaxed);
+    let mut random = SEED + f;
+    core::iter::repeat_with(move || {
+        random ^= random << 13;
+        random ^= random >> 17;
+        random ^= random << 5;
+        random
+    })
 }
 
 #[no_mangle]
@@ -75,15 +64,20 @@ static mut BUFFER: [u32; 255 * 255] = [0; 255 * 255];
 
 #[inline]
 #[no_mangle]
-pub unsafe extern "C" fn key_pressed(value: u8) {
+unsafe extern "C" fn key_pressed(value: u8) {
     KEY_STATE.store(value, Ordering::Relaxed);
 }
 
 #[inline]
 #[no_mangle]
-pub unsafe extern "C" fn game_loop() -> u32 {
+unsafe extern "C" fn game_loop() -> u32 {
     if !GAME_OVER.load(Ordering::Relaxed) {
-        frame_safe(&mut BUFFER, &mut ENEMIES, &mut PLAYER, &mut WALL);
+        frame_safe(
+            &mut *ptr::addr_of_mut!(BUFFER),
+            &mut *ptr::addr_of_mut!(ENEMIES),
+            &mut *ptr::addr_of_mut!(PLAYER),
+            &mut *ptr::addr_of_mut!(WALL),
+        );
         1
     } else {
         0
@@ -97,16 +91,12 @@ fn frame_safe(
     player: &mut [Option<(u8, u8)>; 1],
     wall: &mut [Option<(u8, u8, u8)>; MAX_WALL],
 ) {
-    let f = FRAME.fetch_add(1, Ordering::Relaxed);
-    let mut rng = Rng::new(SEED + f);
+    let mut rng = rng();
     if player[0].is_none() {
         spawn_player(player);
     }
 
-    if f % 241 == 0 {
-        spawn_enemy(enemies, &mut rng);
-    }
-
+    spawn_enemy(enemies, &mut rng);
     update_player_pos(player, wall);
     update_enemy_pos(enemies, player);
     check_wall_collision(wall, enemies);
@@ -123,19 +113,28 @@ fn spawn_player(player: &mut [Option<(u8, u8)>; 1]) {
 }
 
 #[inline]
-fn spawn_enemy(enemies: &mut [Option<(u8, u8, u8)>; MAX_ENEMIES], rng: &mut Rng) {
+fn spawn_enemy(
+    enemies: &mut [Option<(u8, u8, u8)>; MAX_ENEMIES],
+    rng: &mut impl Iterator<Item = u32>,
+) {
     let width_limit = (WIDTH - ENEMY_SIZE) as u32;
     let height_limit = (HEIGHT - ENEMY_SIZE) as u32;
 
     for _ in 0..ENEMIES_PER_WAVE {
         if let Some(slot) = enemies.iter_mut().find(|e| e.is_none()) {
-            let edge = rng.rand_in_range(0, 3);
+            let edge = rng.next().unwrap() % 4;
 
             let position = match edge {
-                0 => (rng.rand_in_range(0, width_limit) as u8, 0),
-                1 => (WIDTH - ENEMY_SIZE, rng.rand_in_range(0, height_limit) as u8),
-                2 => (rng.rand_in_range(0, width_limit) as u8, HEIGHT - ENEMY_SIZE),
-                _ => (0, rng.rand_in_range(0, height_limit) as u8),
+                0 => ((rng.next().unwrap() % width_limit) as u8, 0),
+                1 => (
+                    WIDTH - ENEMY_SIZE,
+                    (rng.next().unwrap() % height_limit) as u8,
+                ),
+                2 => (
+                    (rng.next().unwrap() % width_limit) as u8,
+                    HEIGHT - ENEMY_SIZE,
+                ),
+                _ => (0, (rng.next().unwrap() % height_limit) as u8),
             };
 
             *slot = Some(new_enemy(position.0, position.1));
@@ -159,11 +158,10 @@ fn update_player_pos(
 
         if let Some(key) = key {
             match key {
-                Key::Left if player.0 >= PLAYER_SPEED => player.0 -= PLAYER_SPEED,
-                Key::Right if player.0 + 10 + PLAYER_SPEED <= WIDTH => player.0 += PLAYER_SPEED,
-                Key::Up if player.1 >= PLAYER_SPEED => player.1 -= PLAYER_SPEED,
-                Key::Down if player.1 + 10 + PLAYER_SPEED <= HEIGHT => player.1 += PLAYER_SPEED,
-                _ => {}
+                Key::Left => player.0 = player.0.wrapping_sub(PLAYER_SPEED),
+                Key::Right => player.0 = player.0.wrapping_add(PLAYER_SPEED),
+                Key::Up => player.1 = player.1.wrapping_sub(PLAYER_SPEED),
+                Key::Down => player.1 = player.1.wrapping_add(PLAYER_SPEED),
             }
 
             attempt_spawn_wall(player, wall);
@@ -175,11 +173,8 @@ fn update_player_pos(
 fn attempt_spawn_wall(player: &(u8, u8), wall: &mut [Option<(u8, u8, u8)>; MAX_WALL]) {
     let player_center_x = player.0 + PLAYER_SIZE / 2;
     let player_center_y = player.1 + PLAYER_SIZE / 2;
-    let mut can_spawn_wall = true;
 
-    can_spawn_wall = !wall.iter().any(|w| matches!(w, Some(wall) if wall.0 == player_center_x && wall.1 == player_center_y && wall.2 == 0));
-
-    if can_spawn_wall {
+    if !wall.iter().any(|w| matches!(w, Some(wall) if wall.0 == player_center_x && wall.1 == player_center_y && wall.2 == 0)) {
         if let Some(slot) = wall
             .iter_mut()
             .find(|wall| wall.is_none() || wall.as_ref().map_or(false, |wall| wall.2 == 1))
@@ -219,7 +214,7 @@ fn update_enemy_pos(
                         && (enemy.1 < player.1 + PLAYER_SIZE)
                         && (enemy.1 + ENEMY_SIZE > player.1)
                     {
-                        GAME_OVER.store(true, Ordering::Relaxed);
+                        // GAME_OVER.store(true, Ordering::Relaxed);
                     }
                 }
             }
