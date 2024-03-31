@@ -18,11 +18,6 @@ const ENEMIES_PER_WAVE: u8 = 1;
 const MAX_ENEMIES: usize = 255555;
 const ENEMIES_NONE: core::option::Option<(u8, u8, u8)> = None;
 
-// static mut WALL: [Option<(u8, u8, u8)>; MAX_WALL] = [WALL_NONE; MAX_WALL];
-// const WALL_SIZE: u8 = 2;
-// const MAX_WALL: usize = 10000;
-// const WALL_NONE: core::option::Option<(u8, u8, u8)> = None;
-
 static GAME_OVER: AtomicBool = AtomicBool::new(false);
 static FRAME: AtomicU32 = AtomicU32::new(0);
 static KEY_STATE: AtomicU8 = AtomicU8::new(0);
@@ -31,11 +26,6 @@ static KEY_STATE: AtomicU8 = AtomicU8::new(0);
 fn new_enemy(x: u8, y: u8) -> (u8, u8, u8) {
     (x, y, 1)
 }
-
-// #[inline]
-// fn new_wall(x: u8, y: u8) -> (u8, u8, u8) {
-//     (x, y, 0)
-// }
 
 enum Key {
     Left,
@@ -73,7 +63,6 @@ unsafe extern "C" fn game_loop() -> u32 {
             &mut *ptr::addr_of_mut!(BUFFER),
             &mut *ptr::addr_of_mut!(ENEMIES),
             &mut *ptr::addr_of_mut!(PLAYER),
-            // &mut *ptr::addr_of_mut!(WALL),
         );
         1
     } else {
@@ -86,14 +75,12 @@ fn frame_safe(
     buffer: &mut [u32; 255 * 255],
     enemies: &mut [Option<(u8, u8, u8)>; MAX_ENEMIES],
     player: &mut (u8, u8),
-    // wall: &mut [Option<(u8, u8, u8)>; MAX_WALL],
 ) {
     let mut rng = rng();
 
     spawn_enemy(enemies, &mut rng);
     update_player_pos(player);
     update_enemy_pos(enemies, player);
-    // check_wall_collision(wall, enemies);
     render_frame(buffer, enemies, *player);
 }
 
@@ -128,9 +115,7 @@ fn spawn_enemy(
 }
 
 #[inline]
-fn update_player_pos(player: &mut (u8, u8))
-// wall: &mut [Option<(u8, u8, u8)>; MAX_WALL])
-{
+fn update_player_pos(player: &mut (u8, u8)) {
     let key = match KEY_STATE.load(Ordering::Relaxed) {
         1 => Some(Key::Left),
         2 => Some(Key::Right),
@@ -146,25 +131,8 @@ fn update_player_pos(player: &mut (u8, u8))
             Key::Up => player.1 = player.1.wrapping_sub(PLAYER_SPEED),
             Key::Down => player.1 = player.1.wrapping_add(PLAYER_SPEED),
         }
-
-        // attempt_spawn_wall(player, wall);
     }
 }
-
-// #[inline]
-// fn attempt_spawn_wall(player: &(u8, u8), wall: &mut [Option<(u8, u8, u8)>; MAX_WALL]) {
-//     let player_center_x = player.0 + PLAYER_SIZE / 2;
-//     let player_center_y = player.1 + PLAYER_SIZE / 2;
-
-//     if !wall.iter().any(|w| matches!(w, Some(wall) if wall.0 == player_center_x && wall.1 == player_center_y && wall.2 == 0)) {
-//         if let Some(slot) = wall
-//             .iter_mut()
-//             .find(|wall| wall.is_none() || wall.as_ref().map_or(false, |wall| wall.2 == 1))
-//         {
-//             *slot = Some(new_wall(player_center_x, player_center_y));
-//         }
-//     }
-// }
 
 #[inline]
 fn update_enemy_pos(enemies: &mut [Option<(u8, u8, u8)>; MAX_ENEMIES], player: &mut (u8, u8)) {
@@ -198,42 +166,11 @@ fn update_enemy_pos(enemies: &mut [Option<(u8, u8, u8)>; MAX_ENEMIES], player: &
     }
 }
 
-// #[inline]
-// fn check_wall_collision(
-//     wall: &mut [Option<(u8, u8, u8)>; MAX_WALL],
-//     enemies: &mut [Option<(u8, u8, u8)>; MAX_ENEMIES],
-// ) {
-//     for wall_entity in wall.iter_mut() {
-//         if let Some(wall) = wall_entity {
-//             if wall.2 == 1 {
-//                 continue;
-//             }
-
-//             for enemy_entity in enemies.iter_mut() {
-//                 if let Some(enemy) = enemy_entity {
-//                     if enemy.2 == 0 {
-//                         continue;
-//                     }
-//                     if (enemy.0 < wall.0 + WALL_SIZE)
-//                         && (enemy.0 + ENEMY_SIZE > wall.0)
-//                         && (enemy.1 < wall.1 + WALL_SIZE)
-//                         && (enemy.1 + ENEMY_SIZE > wall.1)
-//                     {
-//                         enemy.2 = 0;
-//                         wall.2 = 1;
-//                     }
-//                 }
-//             }
-//         }
-//     }
-// }
-
 #[inline]
 fn render_frame(
     buffer: &mut [u32; 255 * 255],
     enemies: &[Option<(u8, u8, u8)>; MAX_ENEMIES],
     player: (u8, u8),
-    // wall: &[Option<(u8, u8, u8)>; MAX_WALL],
 ) {
     buffer.fill(0xFF_00_00_00);
 
@@ -247,10 +184,6 @@ fn render_frame(
             }
         }
     };
-
-    // for wall in wall.iter().flatten().filter(|wall| wall.2 == 0) {
-    //     draw_rect(wall.0, wall.1, WALL_SIZE, WALL_SIZE, 0xFFFFFF);
-    // }
 
     for enemy in enemies.iter().flatten().filter(|e| e.2 != 0) {
         draw_rect(enemy.0, enemy.1, ENEMY_SIZE, ENEMY_SIZE, 0xFFFFBF00);
