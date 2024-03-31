@@ -9,7 +9,7 @@ const PLAYER_SIZE: u8 = 5;
 const WALL_SIZE: u8 = 2;
 const SEED: u32 = 0x1331;
 const ENEMIES_PER_WAVE: u8 = 3;
-const MAX_ENEMIES: usize = 255;
+const MAX_ENEMIES: usize = 9;
 const ENEMIES_NONE: core::option::Option<(u8, u8, u8)> = None;
 const MAX_WALL: usize = 100;
 const WALL_NONE: core::option::Option<(u8, u8, u8)> = None;
@@ -103,7 +103,7 @@ fn frame_safe(
         spawn_player(player);
     }
 
-    if f % 340 == 0 {
+    if f % 241 == 0 {
         spawn_enemy(enemies, &mut rng);
     }
 
