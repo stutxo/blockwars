@@ -6,20 +6,22 @@ use core::{
 
 const WIDTH: u8 = 255;
 const HEIGHT: u8 = 255;
-const PLAYER_SPEED: u8 = 1;
-const ENEMY_SIZE: u8 = 5;
-const PLAYER_SIZE: u8 = 5;
-const WALL_SIZE: u8 = 2;
 const SEED: u32 = 0x1331;
-const ENEMIES_PER_WAVE: u8 = 255;
-const MAX_ENEMIES: usize = 1000000;
-const ENEMIES_NONE: core::option::Option<(u8, u8, u8)> = None;
-const MAX_WALL: usize = 10000;
-const WALL_NONE: core::option::Option<(u8, u8, u8)> = None;
 
-static mut PLAYER: [Option<(u8, u8)>; 1] = [None; 1];
+static mut PLAYER: (u8, u8) = (WIDTH / 2 - 5, HEIGHT / 2 - 5);
+const PLAYER_SIZE: u8 = 5;
+const PLAYER_SPEED: u8 = 1;
+
 static mut ENEMIES: [Option<(u8, u8, u8)>; MAX_ENEMIES] = [ENEMIES_NONE; MAX_ENEMIES];
-static mut WALL: [Option<(u8, u8, u8)>; MAX_WALL] = [WALL_NONE; MAX_WALL];
+const ENEMY_SIZE: u8 = 5;
+const ENEMIES_PER_WAVE: u8 = 1;
+const MAX_ENEMIES: usize = 255555;
+const ENEMIES_NONE: core::option::Option<(u8, u8, u8)> = None;
+
+// static mut WALL: [Option<(u8, u8, u8)>; MAX_WALL] = [WALL_NONE; MAX_WALL];
+// const WALL_SIZE: u8 = 2;
+// const MAX_WALL: usize = 10000;
+// const WALL_NONE: core::option::Option<(u8, u8, u8)> = None;
 
 static GAME_OVER: AtomicBool = AtomicBool::new(false);
 static FRAME: AtomicU32 = AtomicU32::new(0);
@@ -30,15 +32,10 @@ fn new_enemy(x: u8, y: u8) -> (u8, u8, u8) {
     (x, y, 1)
 }
 
-#[inline]
-fn new_player() -> (u8, u8) {
-    (WIDTH / 2 - 5, HEIGHT / 2 - 5)
-}
-
-#[inline]
-fn new_wall(x: u8, y: u8) -> (u8, u8, u8) {
-    (x, y, 0)
-}
+// #[inline]
+// fn new_wall(x: u8, y: u8) -> (u8, u8, u8) {
+//     (x, y, 0)
+// }
 
 enum Key {
     Left,
@@ -76,7 +73,7 @@ unsafe extern "C" fn game_loop() -> u32 {
             &mut *ptr::addr_of_mut!(BUFFER),
             &mut *ptr::addr_of_mut!(ENEMIES),
             &mut *ptr::addr_of_mut!(PLAYER),
-            &mut *ptr::addr_of_mut!(WALL),
+            // &mut *ptr::addr_of_mut!(WALL),
         );
         1
     } else {
@@ -88,28 +85,16 @@ unsafe extern "C" fn game_loop() -> u32 {
 fn frame_safe(
     buffer: &mut [u32; 255 * 255],
     enemies: &mut [Option<(u8, u8, u8)>; MAX_ENEMIES],
-    player: &mut [Option<(u8, u8)>; 1],
-    wall: &mut [Option<(u8, u8, u8)>; MAX_WALL],
+    player: &mut (u8, u8),
+    // wall: &mut [Option<(u8, u8, u8)>; MAX_WALL],
 ) {
     let mut rng = rng();
-    if player[0].is_none() {
-        spawn_player(player);
-    }
 
     spawn_enemy(enemies, &mut rng);
-    update_player_pos(player, wall);
+    update_player_pos(player);
     update_enemy_pos(enemies, player);
-    check_wall_collision(wall, enemies);
-    render_frame(buffer, enemies, player, wall);
-}
-
-#[inline]
-fn spawn_player(player: &mut [Option<(u8, u8)>; 1]) {
-    for slot in player.iter_mut() {
-        if slot.is_none() {
-            *slot = Some(new_player());
-        }
-    }
+    // check_wall_collision(wall, enemies);
+    render_frame(buffer, enemies, *player);
 }
 
 #[inline]
@@ -143,121 +128,112 @@ fn spawn_enemy(
 }
 
 #[inline]
-fn update_player_pos(
-    player: &mut [Option<(u8, u8)>; 1],
-    wall: &mut [Option<(u8, u8, u8)>; MAX_WALL],
-) {
-    if let Some(player) = &mut player[0] {
-        let key = match KEY_STATE.load(Ordering::Relaxed) {
-            1 => Some(Key::Left),
-            2 => Some(Key::Right),
-            3 => Some(Key::Up),
-            4 => Some(Key::Down),
-            _ => None,
-        };
+fn update_player_pos(player: &mut (u8, u8))
+// wall: &mut [Option<(u8, u8, u8)>; MAX_WALL])
+{
+    let key = match KEY_STATE.load(Ordering::Relaxed) {
+        1 => Some(Key::Left),
+        2 => Some(Key::Right),
+        3 => Some(Key::Up),
+        4 => Some(Key::Down),
+        _ => None,
+    };
 
-        if let Some(key) = key {
-            match key {
-                Key::Left => player.0 = player.0.wrapping_sub(PLAYER_SPEED),
-                Key::Right => player.0 = player.0.wrapping_add(PLAYER_SPEED),
-                Key::Up => player.1 = player.1.wrapping_sub(PLAYER_SPEED),
-                Key::Down => player.1 = player.1.wrapping_add(PLAYER_SPEED),
-            }
-
-            attempt_spawn_wall(player, wall);
+    if let Some(key) = key {
+        match key {
+            Key::Left => player.0 = player.0.wrapping_sub(PLAYER_SPEED),
+            Key::Right => player.0 = player.0.wrapping_add(PLAYER_SPEED),
+            Key::Up => player.1 = player.1.wrapping_sub(PLAYER_SPEED),
+            Key::Down => player.1 = player.1.wrapping_add(PLAYER_SPEED),
         }
+
+        // attempt_spawn_wall(player, wall);
     }
 }
 
-#[inline]
-fn attempt_spawn_wall(player: &(u8, u8), wall: &mut [Option<(u8, u8, u8)>; MAX_WALL]) {
-    let player_center_x = player.0 + PLAYER_SIZE / 2;
-    let player_center_y = player.1 + PLAYER_SIZE / 2;
+// #[inline]
+// fn attempt_spawn_wall(player: &(u8, u8), wall: &mut [Option<(u8, u8, u8)>; MAX_WALL]) {
+//     let player_center_x = player.0 + PLAYER_SIZE / 2;
+//     let player_center_y = player.1 + PLAYER_SIZE / 2;
 
-    if !wall.iter().any(|w| matches!(w, Some(wall) if wall.0 == player_center_x && wall.1 == player_center_y && wall.2 == 0)) {
-        if let Some(slot) = wall
-            .iter_mut()
-            .find(|wall| wall.is_none() || wall.as_ref().map_or(false, |wall| wall.2 == 1))
-        {
-            *slot = Some(new_wall(player_center_x, player_center_y));
-        }
-    }
-}
+//     if !wall.iter().any(|w| matches!(w, Some(wall) if wall.0 == player_center_x && wall.1 == player_center_y && wall.2 == 0)) {
+//         if let Some(slot) = wall
+//             .iter_mut()
+//             .find(|wall| wall.is_none() || wall.as_ref().map_or(false, |wall| wall.2 == 1))
+//         {
+//             *slot = Some(new_wall(player_center_x, player_center_y));
+//         }
+//     }
+// }
 
 #[inline]
-fn update_enemy_pos(
-    enemies: &mut [Option<(u8, u8, u8)>; MAX_ENEMIES],
-    player: &mut [Option<(u8, u8)>; 1],
-) {
+fn update_enemy_pos(enemies: &mut [Option<(u8, u8, u8)>; MAX_ENEMIES], player: &mut (u8, u8)) {
     for enemy_entity in enemies.iter_mut() {
-        for player_entity in player.iter() {
-            if let Some(player) = player_entity {
-                if let Some(enemy) = enemy_entity {
-                    if enemy.2 == 0 {
-                        continue;
-                    }
-
-                    if enemy.0 > player.0 {
-                        enemy.0 -= 1;
-                    } else if enemy.0 < player.0 {
-                        enemy.0 += 1;
-                    }
-
-                    if enemy.1 > player.1 {
-                        enemy.1 -= 1;
-                    } else if enemy.1 < player.1 {
-                        enemy.1 += 1;
-                    }
-
-                    if (enemy.0 < player.0 + PLAYER_SIZE)
-                        && (enemy.0 + ENEMY_SIZE > player.0)
-                        && (enemy.1 < player.1 + PLAYER_SIZE)
-                        && (enemy.1 + ENEMY_SIZE > player.1)
-                    {
-                        // GAME_OVER.store(true, Ordering::Relaxed);
-                    }
-                }
-            }
-        }
-    }
-}
-
-#[inline]
-fn check_wall_collision(
-    wall: &mut [Option<(u8, u8, u8)>; MAX_WALL],
-    enemies: &mut [Option<(u8, u8, u8)>; MAX_ENEMIES],
-) {
-    for wall_entity in wall.iter_mut() {
-        if let Some(wall) = wall_entity {
-            if wall.2 == 1 {
+        if let Some(enemy) = enemy_entity {
+            if enemy.2 == 0 {
                 continue;
             }
 
-            for enemy_entity in enemies.iter_mut() {
-                if let Some(enemy) = enemy_entity {
-                    if enemy.2 == 0 {
-                        continue;
-                    }
-                    if (enemy.0 < wall.0 + WALL_SIZE)
-                        && (enemy.0 + ENEMY_SIZE > wall.0)
-                        && (enemy.1 < wall.1 + WALL_SIZE)
-                        && (enemy.1 + ENEMY_SIZE > wall.1)
-                    {
-                        enemy.2 = 0;
-                        wall.2 = 1;
-                    }
-                }
+            if enemy.0 > player.0 {
+                enemy.0 -= 1;
+            } else if enemy.0 < player.0 {
+                enemy.0 += 1;
+            }
+
+            if enemy.1 > player.1 {
+                enemy.1 -= 1;
+            } else if enemy.1 < player.1 {
+                enemy.1 += 1;
+            }
+
+            if (enemy.0 < player.0 + PLAYER_SIZE)
+                && (enemy.0 + ENEMY_SIZE > player.0)
+                && (enemy.1 < player.1 + PLAYER_SIZE)
+                && (enemy.1 + ENEMY_SIZE > player.1)
+            {
+                // GAME_OVER.store(true, Ordering::Relaxed);
+                enemy.2 = 0;
             }
         }
     }
 }
+
+// #[inline]
+// fn check_wall_collision(
+//     wall: &mut [Option<(u8, u8, u8)>; MAX_WALL],
+//     enemies: &mut [Option<(u8, u8, u8)>; MAX_ENEMIES],
+// ) {
+//     for wall_entity in wall.iter_mut() {
+//         if let Some(wall) = wall_entity {
+//             if wall.2 == 1 {
+//                 continue;
+//             }
+
+//             for enemy_entity in enemies.iter_mut() {
+//                 if let Some(enemy) = enemy_entity {
+//                     if enemy.2 == 0 {
+//                         continue;
+//                     }
+//                     if (enemy.0 < wall.0 + WALL_SIZE)
+//                         && (enemy.0 + ENEMY_SIZE > wall.0)
+//                         && (enemy.1 < wall.1 + WALL_SIZE)
+//                         && (enemy.1 + ENEMY_SIZE > wall.1)
+//                     {
+//                         enemy.2 = 0;
+//                         wall.2 = 1;
+//                     }
+//                 }
+//             }
+//         }
+//     }
+// }
 
 #[inline]
 fn render_frame(
     buffer: &mut [u32; 255 * 255],
     enemies: &[Option<(u8, u8, u8)>; MAX_ENEMIES],
-    player: &[Option<(u8, u8)>; 1],
-    wall: &[Option<(u8, u8, u8)>; MAX_WALL],
+    player: (u8, u8),
+    // wall: &[Option<(u8, u8, u8)>; MAX_WALL],
 ) {
     buffer.fill(0xFF_00_00_00);
 
@@ -272,17 +248,15 @@ fn render_frame(
         }
     };
 
-    if let Some(player) = player.iter().flatten().next() {
-        draw_rect(player.0, player.1, PLAYER_SIZE, PLAYER_SIZE, 0xFFFFFF);
-    }
-
-    for wall in wall.iter().flatten().filter(|wall| wall.2 == 0) {
-        draw_rect(wall.0, wall.1, WALL_SIZE, WALL_SIZE, 0xFFFFFF);
-    }
+    // for wall in wall.iter().flatten().filter(|wall| wall.2 == 0) {
+    //     draw_rect(wall.0, wall.1, WALL_SIZE, WALL_SIZE, 0xFFFFFF);
+    // }
 
     for enemy in enemies.iter().flatten().filter(|e| e.2 != 0) {
         draw_rect(enemy.0, enemy.1, ENEMY_SIZE, ENEMY_SIZE, 0xFFFFBF00);
     }
+
+    draw_rect(player.0, player.1, PLAYER_SIZE, PLAYER_SIZE, 0xFFFFFF);
 }
 
 #[panic_handler]
