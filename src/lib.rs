@@ -12,29 +12,17 @@ static mut PLAYER: (u8, u8) = (WIDTH / 2 - 5, HEIGHT / 2 - 5);
 const PLAYER_SIZE: u8 = 5;
 const PLAYER_SPEED: u8 = 1;
 
-static mut ENEMIES: [Option<(u8, u8, u8)>; MAX_ENEMIES] = [ENEMIES_NONE; MAX_ENEMIES];
+static mut ENEMIES: [(u8, u8, u8); MAX_ENEMIES] = [(0, 0, 0); MAX_ENEMIES];
 const ENEMY_SIZE: u8 = 5;
 const ENEMIES_PER_WAVE: u8 = 1;
-const MAX_ENEMIES: usize = 255555;
-const ENEMIES_NONE: core::option::Option<(u8, u8, u8)> = None;
+const MAX_ENEMIES: usize = 255 * 255 / 25;
 
 static GAME_OVER: AtomicBool = AtomicBool::new(false);
 static FRAME: AtomicU32 = AtomicU32::new(0);
 static KEY_STATE: AtomicU8 = AtomicU8::new(0);
 
-#[inline]
-fn new_enemy(x: u8, y: u8) -> (u8, u8, u8) {
-    (x, y, 1)
-}
-
-enum Key {
-    Left,
-    Right,
-    Up,
-    Down,
-}
-
 //https://blog.orhun.dev/zero-deps-random-in-rust/
+#[inline]
 fn rng() -> impl Iterator<Item = u32> {
     let f = FRAME.fetch_add(1, Ordering::Relaxed);
     let mut random = SEED + f;
@@ -44,6 +32,13 @@ fn rng() -> impl Iterator<Item = u32> {
         random ^= random << 5;
         random
     })
+}
+
+enum Key {
+    Left,
+    Right,
+    Up,
+    Down,
 }
 
 #[no_mangle]
@@ -73,7 +68,7 @@ unsafe extern "C" fn game_loop() -> u32 {
 #[inline]
 fn frame_safe(
     buffer: &mut [u32; 255 * 255],
-    enemies: &mut [Option<(u8, u8, u8)>; MAX_ENEMIES],
+    enemies: &mut [(u8, u8, u8); MAX_ENEMIES],
     player: &mut (u8, u8),
 ) {
     let mut rng = rng();
@@ -85,15 +80,12 @@ fn frame_safe(
 }
 
 #[inline]
-fn spawn_enemy(
-    enemies: &mut [Option<(u8, u8, u8)>; MAX_ENEMIES],
-    rng: &mut impl Iterator<Item = u32>,
-) {
+fn spawn_enemy(enemies: &mut [(u8, u8, u8); MAX_ENEMIES], rng: &mut impl Iterator<Item = u32>) {
     let width_limit = (WIDTH - ENEMY_SIZE) as u32;
     let height_limit = (HEIGHT - ENEMY_SIZE) as u32;
 
     for _ in 0..ENEMIES_PER_WAVE {
-        if let Some(slot) = enemies.iter_mut().find(|e| e.is_none()) {
+        if let Some(slot) = enemies.iter_mut().find(|e| e.2 == 0) {
             let edge = rng.next().unwrap() % 4;
 
             let position = match edge {
@@ -109,9 +101,14 @@ fn spawn_enemy(
                 _ => (0, (rng.next().unwrap() % height_limit) as u8),
             };
 
-            *slot = Some(new_enemy(position.0, position.1));
+            *slot = new_enemy(position.0, position.1);
         }
     }
+}
+
+#[inline]
+fn new_enemy(x: u8, y: u8) -> (u8, u8, u8) {
+    (x, y, 1)
 }
 
 #[inline]
@@ -135,33 +132,31 @@ fn update_player_pos(player: &mut (u8, u8)) {
 }
 
 #[inline]
-fn update_enemy_pos(enemies: &mut [Option<(u8, u8, u8)>; MAX_ENEMIES], player: &mut (u8, u8)) {
-    for enemy_entity in enemies.iter_mut() {
-        if let Some(enemy) = enemy_entity {
-            if enemy.2 == 0 {
-                continue;
-            }
+fn update_enemy_pos(enemies: &mut [(u8, u8, u8); MAX_ENEMIES], player: &mut (u8, u8)) {
+    for enemy in enemies.iter_mut() {
+        if enemy.2 == 0 {
+            continue;
+        }
 
-            if enemy.0 > player.0 {
-                enemy.0 -= 1;
-            } else if enemy.0 < player.0 {
-                enemy.0 += 1;
-            }
+        if enemy.0 > player.0 {
+            enemy.0 -= 1;
+        } else if enemy.0 < player.0 {
+            enemy.0 += 1;
+        }
 
-            if enemy.1 > player.1 {
-                enemy.1 -= 1;
-            } else if enemy.1 < player.1 {
-                enemy.1 += 1;
-            }
+        if enemy.1 > player.1 {
+            enemy.1 -= 1;
+        } else if enemy.1 < player.1 {
+            enemy.1 += 1;
+        }
 
-            if (enemy.0 < player.0 + PLAYER_SIZE)
-                && (enemy.0 + ENEMY_SIZE > player.0)
-                && (enemy.1 < player.1 + PLAYER_SIZE)
-                && (enemy.1 + ENEMY_SIZE > player.1)
-            {
-                // GAME_OVER.store(true, Ordering::Relaxed);
-                enemy.2 = 0;
-            }
+        if (enemy.0 < player.0 + PLAYER_SIZE)
+            && (enemy.0 + ENEMY_SIZE > player.0)
+            && (enemy.1 < player.1 + PLAYER_SIZE)
+            && (enemy.1 + ENEMY_SIZE > player.1)
+        {
+            // GAME_OVER.store(true, Ordering::Relaxed);
+            enemy.2 = 0;
         }
     }
 }
@@ -169,7 +164,7 @@ fn update_enemy_pos(enemies: &mut [Option<(u8, u8, u8)>; MAX_ENEMIES], player: &
 #[inline]
 fn render_frame(
     buffer: &mut [u32; 255 * 255],
-    enemies: &[Option<(u8, u8, u8)>; MAX_ENEMIES],
+    enemies: &[(u8, u8, u8); MAX_ENEMIES],
     player: (u8, u8),
 ) {
     buffer.fill(0xFF_00_00_00);
@@ -185,7 +180,10 @@ fn render_frame(
         }
     };
 
-    for enemy in enemies.iter().flatten().filter(|e| e.2 != 0) {
+    for enemy in enemies.iter() {
+        if enemy.2 == 0 {
+            continue;
+        }
         draw_rect(enemy.0, enemy.1, ENEMY_SIZE, ENEMY_SIZE, 0xFFFFBF00);
     }
 
