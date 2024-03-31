@@ -5,7 +5,7 @@
     <script type="module">
         (async () => {
             const { instance: a } = await WebAssembly.instantiateStreaming(fetch("./blockwars.wasm")),
-                w = 800,
+                w = 255,
                 c = document.getElementById("canvas");
             c.width = w;
             c.height = w;
