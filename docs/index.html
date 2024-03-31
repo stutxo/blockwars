@@ -2,6 +2,50 @@
 <html>
 
 <head>
+    <style>
+        #game-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+        }
+
+        #controls {
+            display: grid;
+            grid-template-columns: 50px 50px 50px;
+            grid-template-rows: 50px 50px;
+            grid-gap: 10px;
+            justify-content: center;
+            align-items: center;
+        }
+
+        #controls button {
+            width: 50px;
+            height: 50px;
+            font-size: 24px;
+            touch-action: manipulation;
+        }
+
+        #up {
+            grid-column: 2 / 3;
+            grid-row: 1 / 2;
+        }
+
+        #left {
+            grid-column: 1 / 2;
+            grid-row: 2 / 3;
+        }
+
+        #right {
+            grid-column: 3 / 4;
+            grid-row: 2 / 3;
+        }
+
+        #down {
+            grid-column: 2 / 3;
+            grid-row: 2 / 3;
+        }
+    </style>
     <script type="module">
         (async () => {
             const { instance: a } = await WebAssembly.instantiateStreaming(fetch("./blockwars.wasm")),
@@ -9,7 +53,6 @@
                 c = document.getElementById("canvas");
             c.width = w;
             c.height = w;
-            // a.exports.new();
             const b = a.exports.BUFFER.value,
                 i = new ImageData(new Uint8ClampedArray(a.exports.memory.buffer, b, 4 * w * w), w),
                 d = c.getContext("2d"),
@@ -35,6 +78,7 @@
             };
 
 
+
             document.addEventListener('keydown', (event) => {
                 if (event.code in keysPressed) {
                     keysPressed[event.code] = true;
@@ -46,6 +90,30 @@
                 if (event.code in keysPressed) {
                     keysPressed[event.code] = false;
                 }
+            });
+
+            document.getElementById('up').addEventListener('click', () => {
+                a.exports.key_pressed(3);
+
+            });
+
+            document.getElementById('down').addEventListener('click', () => {
+                a.exports.key_pressed(4);
+
+            });
+
+            document.getElementById('left').addEventListener('click', () => {
+                a.exports.key_pressed(1);
+
+            });
+
+            document.getElementById('right').addEventListener('click', () => {
+                a.exports.key_pressed(2);
+
+            });
+
+            document.getElementById('restart').addEventListener('click', () => {
+                location.reload();
             });
 
 
@@ -72,7 +140,17 @@
 </head>
 
 <body>
-    <canvas id="canvas"></canvas>
+    <div id="game-container">
+        <canvas id="canvas"></canvas>
+        <div id="controls">
+            <button id="up">⬆️</button>
+            <button id="left">⬅️</button>
+            <button id="right">➡️</button>
+            <button id="down">⬇️</button>
+        </div>
+        <button id="restart">🔄</button>
+
+    </div>
 </body>
 
 </html>
