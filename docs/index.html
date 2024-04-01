@@ -17,51 +17,6 @@
             background-color: #f0f0f0;
         }
 
-        #game-container {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 20px;
-        }
-
-        #controls {
-            display: grid;
-            grid-template-columns: repeat(3, minmax(50px, 1fr));
-            grid-template-rows: 50px 50px;
-            grid-gap: 10px;
-            justify-content: center;
-            align-items: center;
-        }
-
-        #controls button {
-            width: 100%;
-            height: 100%;
-            font-size: 35px;
-            touch-action: manipulation;
-            background-color: transparent;
-            border: none;
-        }
-
-        #up {
-            grid-column: 2 / 3;
-            grid-row: 1 / 2;
-        }
-
-        #left {
-            grid-column: 1 / 2;
-            grid-row: 2 / 3;
-        }
-
-        #right {
-            grid-column: 3 / 4;
-            grid-row: 2 / 3;
-        }
-
-        #down {
-            grid-column: 2 / 3;
-            grid-row: 2 / 3;
-        }
-
         #canvas {
             max-width: 100%;
             height: auto;
@@ -88,77 +43,48 @@
                 r = () => {
                     const game_loop = a.exports.game_loop();
                     console.log(game_loop);
-                    movePlayer();
                     d.putImageData(i, 0, 0);
                     requestAnimationFrame(r);
                 };
             r();
 
 
-            var keysPressed = {
-                ArrowLeft: false,
-                KeyA: false,
-                ArrowRight: false,
-                KeyD: false,
-                ArrowUp: false,
-                KeyW: false,
-                ArrowDown: false,
-                KeyS: false,
-            };
+            var currentDirectionIsLeft = true; // Start with moving left
 
-
+            const allowedKeys = new Set(['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'w', 'a', 's', 'd', ' ', 'MouseLeft', 'MouseRight', 'Touch']);
 
             document.addEventListener('keydown', (event) => {
-                if (event.code in keysPressed) {
-                    keysPressed[event.code] = true;
+                if (allowedKeys.has(event.key)) {
+                    toggleDirectionAndMove();
+                    event.preventDefault(); // Prevent scrolling with arrow keys and space
                 }
-            });
+            }, { passive: false });
 
-
-            document.addEventListener('keyup', (event) => {
-                if (event.code in keysPressed) {
-                    keysPressed[event.code] = false;
+            document.addEventListener('mousedown', (event) => {
+                // Mouse left click = 0, right click = 2
+                const mouseKey = event.button === 0 ? 'MouseLeft' : event.button === 2 ? 'MouseRight' : '';
+                if (allowedKeys.has(mouseKey)) {
+                    toggleDirectionAndMove();
+                    event.preventDefault(); // Prevent context menu on right click
                 }
-            });
+            }, { passive: false });
 
-            document.getElementById('up').addEventListener('click', () => {
-                a.exports.key_pressed(3);
-
-            });
-
-            document.getElementById('down').addEventListener('click', () => {
-                a.exports.key_pressed(4);
-
-            });
-
-            document.getElementById('left').addEventListener('click', () => {
-                a.exports.key_pressed(1);
-
-            });
-
-            document.getElementById('right').addEventListener('click', () => {
-                a.exports.key_pressed(2);
-
-            });
-
-
-            function movePlayer() {
-                if (!keysPressed) {
-                    return;
+            document.addEventListener('touchstart', (event) => {
+                if (allowedKeys.has('Touch')) {
+                    toggleDirectionAndMove();
+                    event.preventDefault(); // Prevent default touch behavior (like scrolling)
                 }
-                if (keysPressed.ArrowLeft || keysPressed.KeyA) {
-                    a.exports.key_pressed(1);
+            }, { passive: false });
+
+            function toggleDirectionAndMove() {
+                if (currentDirectionIsLeft) {
+                    a.exports.key_pressed(1); // Move left
+                } else {
+                    a.exports.key_pressed(2); // Move right
                 }
-                if (keysPressed.ArrowRight || keysPressed.KeyD) {
-                    a.exports.key_pressed(2);
-                }
-                if (keysPressed.ArrowUp || keysPressed.KeyW) {
-                    a.exports.key_pressed(3);
-                }
-                if (keysPressed.ArrowDown || keysPressed.KeyS) {
-                    a.exports.key_pressed(4);
-                }
+                currentDirectionIsLeft = !currentDirectionIsLeft;
             }
+
 
         })();
     </script>
@@ -172,12 +98,6 @@
 
     <div id="game-container">
         <canvas id="canvas"></canvas>
-        <div id="controls">
-            <button id="up">⬆️</button>
-            <button id="left">⬅️</button>
-            <button id="right">➡️</button>
-            <button id="down">⬇️</button>
-        </div>
     </div>
 </body>
 
