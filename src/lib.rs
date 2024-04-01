@@ -80,16 +80,13 @@ fn frame_safe(
 }
 
 fn spawn_enemy(enemies: &mut [(u8, u8, u8); MAX_ENEMIES], rng: &mut impl Iterator<Item = u32>) {
-    // Define the spawn range limits
     let spawn_range_start = 64;
     let spawn_range_end = 191;
 
-    // Calculate the width of the spawn range
     let spawn_range_width = (spawn_range_end - spawn_range_start) as u32;
 
     for _ in 0..ENEMIES_PER_WAVE {
         if let Some(slot) = enemies.iter_mut().find(|e| e.2 == 0) {
-            // Adjust the calculation of position to be within the spawn range
             let position_x =
                 (rng.next().unwrap() % spawn_range_width + spawn_range_start as u32) as u8;
             let position = (position_x, 0);
