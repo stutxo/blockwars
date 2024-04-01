@@ -3,7 +3,7 @@ use core::ptr;
 
 const WIDTH: u8 = 255;
 const HEIGHT: u8 = 255;
-const SEED: u32 = 0x1331;
+const SEED: u32 = 0x1337;
 
 static mut PLAYER: (u8, u8, u8) = (WIDTH / 2 - 5, (HEIGHT / 4) * 3, 1);
 
@@ -11,10 +11,10 @@ const PLAYER_SIZE: u8 = 5;
 const PLAYER_SPEED: u32 = 3;
 
 static mut ENEMIES: [(u8, u8, u8); MAX_ENEMIES] = [(0, 0, 0); MAX_ENEMIES];
-const ENEMY_SIZE: u8 = 5;
-const ENEMIES_PER_WAVE: u8 = 3;
+const ENEMY_SIZE: u8 = 4;
+const ENEMIES_PER_WAVE: u8 = 1;
 const MAX_ENEMIES: usize = 255 * 255 / 25;
-const ENEMY_SPAWN_RATE: u32 = 30;
+const ENEMY_SPAWN_RATE: u32 = 10;
 const ENEMY_SPEED: u32 = 2;
 
 static mut KEY_STATE: u8 = 0;
@@ -79,13 +79,20 @@ fn frame_safe(
     render_frame(buffer, enemies, *player);
 }
 
-#[inline]
 fn spawn_enemy(enemies: &mut [(u8, u8, u8); MAX_ENEMIES], rng: &mut impl Iterator<Item = u32>) {
-    let width_limit = (WIDTH - ENEMY_SIZE) as u32;
+    // Define the spawn range limits
+    let spawn_range_start = 64;
+    let spawn_range_end = 191;
+
+    // Calculate the width of the spawn range
+    let spawn_range_width = (spawn_range_end - spawn_range_start) as u32;
 
     for _ in 0..ENEMIES_PER_WAVE {
         if let Some(slot) = enemies.iter_mut().find(|e| e.2 == 0) {
-            let position = ((rng.next().unwrap() % width_limit) as u8, 0);
+            // Adjust the calculation of position to be within the spawn range
+            let position_x =
+                (rng.next().unwrap() % spawn_range_width + spawn_range_start as u32) as u8;
+            let position = (position_x, 0);
 
             *slot = new_enemy(position.0, position.1);
         }

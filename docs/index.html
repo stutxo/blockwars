@@ -39,48 +39,61 @@
             c.height = w;
             const b = a.exports.BUFFER.value,
                 i = new ImageData(new Uint8ClampedArray(a.exports.memory.buffer, b, 4 * w * w), w),
-                d = c.getContext("2d"),
-                r = () => {
-                    const game_loop = a.exports.game_loop();
-                    console.log(game_loop);
-                    d.putImageData(i, 0, 0);
-                    requestAnimationFrame(r);
-                };
-            r();
+                d = c.getContext("2d");
+
+            let lastFrameTime = 0;
+            const targetFPS = 60;
+            const targetFrameTime = 1000 / targetFPS;
+
+            const r = (currentTime) => {
+                requestAnimationFrame(r);
+
+                const deltaTime = currentTime - lastFrameTime;
+
+                if (deltaTime < targetFrameTime) {
+                    return;
+                }
+
+                lastFrameTime = currentTime - (deltaTime % targetFrameTime);
+
+                const game_loop = a.exports.game_loop();
+                console.log(game_loop);
+                d.putImageData(i, 0, 0);
+            };
+            requestAnimationFrame(r);
 
 
-            var currentDirectionIsLeft = true; // Start with moving left
+            var currentDirectionIsLeft = true;
 
             const allowedKeys = new Set(['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'w', 'a', 's', 'd', ' ', 'MouseLeft', 'MouseRight', 'Touch']);
 
             document.addEventListener('keydown', (event) => {
                 if (allowedKeys.has(event.key)) {
                     toggleDirectionAndMove();
-                    event.preventDefault(); // Prevent scrolling with arrow keys and space
+                    event.preventDefault();
                 }
             }, { passive: false });
 
             document.addEventListener('mousedown', (event) => {
-                // Mouse left click = 0, right click = 2
                 const mouseKey = event.button === 0 ? 'MouseLeft' : event.button === 2 ? 'MouseRight' : '';
                 if (allowedKeys.has(mouseKey)) {
                     toggleDirectionAndMove();
-                    event.preventDefault(); // Prevent context menu on right click
+                    event.preventDefault();
                 }
             }, { passive: false });
 
             document.addEventListener('touchstart', (event) => {
                 if (allowedKeys.has('Touch')) {
                     toggleDirectionAndMove();
-                    event.preventDefault(); // Prevent default touch behavior (like scrolling)
+                    event.preventDefault();
                 }
             }, { passive: false });
 
             function toggleDirectionAndMove() {
                 if (currentDirectionIsLeft) {
-                    a.exports.key_pressed(1); // Move left
+                    a.exports.key_pressed(1);
                 } else {
-                    a.exports.key_pressed(2); // Move right
+                    a.exports.key_pressed(2);
                 }
                 currentDirectionIsLeft = !currentDirectionIsLeft;
             }
