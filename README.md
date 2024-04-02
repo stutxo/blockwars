@@ -6,6 +6,8 @@ tiny rust web game
 work in progress, no gameplay yet, just messing around
 
 
+some good stuff to read here on the topic
+
 https://cliffle.com/blog/bare-metal-wasm/
 
 https://surma.dev/things/rust-to-webassembly/
