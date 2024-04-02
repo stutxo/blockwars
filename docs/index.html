@@ -28,14 +28,28 @@
             height: 100% !important;
         }
 
-        #reload-wasm {
-            margin-top: 20px;
-            font-size: 24px;
-            cursor: pointer;
-            border: none;
-            background: none;
-            color: inherit;
+        #increment-seed,
+        #decrement-seed {
             touch-action: manipulation;
+        }
+
+        #seed-control {
+            display: flex;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        #seed-input::-webkit-inner-spin-button,
+        #seed-input::-webkit-outer-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+
+        #seed-input {
+            width: 80px;
+            text-align: center;
+            margin: 0 10px;
+            padding: 5px;
         }
     </style>
 </head>
@@ -44,18 +58,20 @@
 
     <div id="game-container">
         <h1 style="text-align: center; color: #333;">blockwars.gg</h1>
-        <canvas id="canvas"></canvas>
+        <div class="seed-container">
+            <button id="decrement-seed">◀</button>
+            <input type="number" id="seed-input" value="0" />
+            <button id="increment-seed">▶</button>
+        </div>
         <br />
-        <button id="reload-wasm">🔁</button>
+        <canvas id="canvas"></canvas>
         <br />
         <div class="github-container">
             <a href="https://github.com/stutxo/blockwars" id="github-link"
-                style="text-decoration: underline; color: blue;">
-                🐱 GitHub
-            </a>
+                style="text-decoration: underline; color: blue;">🐱 GitHub</a>
         </div>
-
     </div>
+
     <script>
         //This is a base64 encoded WebAssembly binary, it is 33% bigger than the original .wasm binary, im just testing it out.
 
@@ -63,8 +79,6 @@
         const base64Wasm = 'AGFzbQEAAAABCAJgAABgAX8AAwQDAAEABQMBABQGGQN/AEHEgsAAC38AQcjyzwALfwBB0PLPAAsHTwcGbWVtb3J5AgALa2V5X3ByZXNzZWQAAARzZWVkAAEJZ2FtZV9sb29wAAIGQlVGRkVSAwAKX19kYXRhX2VuZAMBC19faGVhcF9iYXNlAwIKzwsDDABBuYLAAEEBOgAACwwAQcCCwAAgADYCAAuyCwEUf0G8gsAAQbyCwAAoAgAiAEEBajYCAAJAIAANAEHAgsAAKAIAQQFqIgBBDXQgAHMiAEERdiAAcyIAQQV0IABzIgxBDXQgDHMiAEERdiAAcyIAQQV0IABzIgBBDXQgAHMiAkERdiACcyICQQV0IAJzIgRBEXAiCEERbCAAQRFwIgJqQZiAwABqQQE6AAAgDEEHcEECaiELQQAhAANAIAJBD2whDSAIQQ9sIQ4gCEEFaiEPIAJBBWohEANAIAAgCyAAIAtLGyERQQggACAAQQhNGyISQQFqIQoDQCAAIBFGBEAgDEEDbCAMQQduQRVsa0GIgMAAaiEBA0AgC0EHSw0FIAFBADoAACABQQNqIQEgC0EBaiELDAALAAsgAEEBaiEJIAAgEkYEQCAKIQAMAgsgAARAQeQAIQEDQCABRQRAIAkhAAwDCyAEQQ10IARzIgNBEXYgA3MiA0EFdCADcyIFQQ10IAVzIgVBEXYgBXMiBUEFdCAFcyIEQQdwIQYCQAJAIANBAXEEQCACIQcgBiAQakERcCIGIQUgCCEDIAIgBkYNAgwBCyACIQUgBiAPakERcCIGIQMgBiAIIgdGDQELIANBEWwgBWpBmIDAAGoiEy0AAEEBQXAgBkEQSRsgBmogB0ZyDQAgE0EBOgAAIABBA2wiAkGCgMAAakEDQQEgAEEBRhs6AAAgAkGBgMAAaiADQQ9sOgAAIAJBgIBAayAFQQ9sOgAAIAkhACADIQggBSECDAULIAFBAWshAQwACwALC0GCgMAAQQI6AABBgYDAACAOOgAAQYCAwAAgDToAAEEBIQAMAAsACwALAkBBuYLAAC0AAEUNAEF/IQZBAiEBA0AgBiEAIAFBGkYNASAAQQFqIQYgAUGAgEBrIAFBA2ohAS0AAEECRw0ACyAAQQJqIQFBACEEAkACQANAAkAgAUUEQCAEIgNBGEcNAQwDC0EYIARrQQNuIAFNDQIgAUEDbCAEaiEDCyADQQNqIQRBACEBIANBgoDAAGotAAAiAEUNAAtBACEEQWghASADQYCAQGstAAAhAiADQYGAwABqLQAAIQMDQCABBEACQCABQZiAwABqLQAAIAJHDQAgAUGZgMAAai0AACADRw0AIAFBmoDAAGotAAAgAEYNBAsgAUEDaiEBIARBAWohBAwBCwsDQAwACwALQQAhBEECIQEDQCABQRpGDQIgAUGAgEBrLQAAQf0BcQ0BIAFBA2ohASAEQQFqIQQMAAsACwJAAkACQCAGQQdNBEAgBEEDbCIJQYGAwABqLQAAIQMgBkEDbCIAQYGAwABqLQAAIQJBBSEHAkAgAEGAgEBrIgAtAAAiCCAJQYCAQGsiBS0AACIJayIKIArBQQ91IgpzIAprQf//A3FBBU0EQCACIANrIgogCsFBD3UiCnMgCmtB//8DcUEFTQ0BCwJAIAggCU8EQEH7ASEHIAggCU0NAQsgACAHIAhqOgAACyACIANJDQIgAiADTQ0FIAAgAkEFazoAAQwFCyAAQQA6AAIgACADOgABIAAgCToAACAFQQI6AAIgBEEHRg0DIARBA2xBhYDAAGoiAC0AAA0CDAMLA0AMAAsACyAAIAJBBWo6AAEMAgsgAEEDOgAAC0G5gsAAQQA6AAALQfyPcCEBA38gAQR/IAFByPLPAGpBADYCACABQQRqIQEMAQVBAAsLIQcDQAJAIAdBGEcEQEEAIQIgB0GCgMAAai0AAEEBa0H/AXEiAEEBakEAIABBA0kbIQAgB0GBgMAAai0AACEDIAdBgIBAay0AACEIA0AgAkEPRg0CIAIgA2pB/wFxQf8BbCEJQQAhAQNAIAFBD0cEQCAJIAEgCGpB/wFxaiIFQYD8A00EQCAFQQJ0QcSCwABqIAA2AgALIAFBAWohAQwBCwsgAkEBaiECDAALAAsPCyAHQQNqIQcMAAsACw==';
         // Base64WasmEnd
         const canvas = document.getElementById('canvas');
-        const reloadButton = document.getElementById('reload-wasm');
-
 
         const canvasSize = 255;
         canvas.width = canvas.height = canvasSize;
@@ -76,17 +90,28 @@
             3: [0, 255, 0, 255],
         };
 
-        async function loadWasmFromBase64(base64) {
+        const wasmBinary = (function () {
+            const binaryString = window.atob(base64Wasm);
+            const bytes = new Uint8Array(binaryString.length);
+            for (let i = 0; i < binaryString.length; i++) {
+                bytes[i] = binaryString.charCodeAt(i);
+            }
+            return bytes;
+        })();
+
+        let wasmInstance = null;
+
+        async function loadWasm(seed) {
             try {
-                const binaryString = window.atob(base64);
-                const bytes = new Uint8Array(binaryString.length);
-                for (let i = 0; i < binaryString.length; i++) {
-                    bytes[i] = binaryString.charCodeAt(i);
+
+                if (wasmInstance !== null) {
+                    // Any required cleanup here
+                    wasmInstance = null;
                 }
 
-                const { instance } = await WebAssembly.instantiate(bytes);
+                const { instance } = await WebAssembly.instantiate(wasmBinary);
                 const { exports: wasm } = instance;
-                wasm.seed(Math.random() * 1000 | 0);
+                wasm.seed(seed);
                 const bufferPointer = wasm.BUFFER.value;
                 const imageData = new ImageData(canvasSize, canvasSize);
                 const targetFrameTime = 1000 / 60; // Target 60 FPS
@@ -121,29 +146,75 @@
                 }, { passive: false });
 
                 document.addEventListener('mousedown', (event) => {
-                    if (!(event.target.closest('.github-container') || event.target.id === 'reload-wasm')) {
+                    if (event.target.closest('.github-container') || event.target.closest('.seed-container')) {
+                        return;
+                    } else {
                         wasm.key_pressed();
                         event.preventDefault();
                     }
                 }, { passive: false });
 
                 document.addEventListener('touchstart', (event) => {
-                    if (!(event.target.closest('.github-container') || event.target.id === 'reload-wasm')) {
+                    if (event.target.closest('.github-container') || event.target.closest('.seed-container')) {
+                        return;
+                    } else {
                         wasm.key_pressed();
                         event.preventDefault();
                     }
                 }, { passive: false });
 
-                console.log('WASM module loaded successfully')
+                console.log('WASM module loaded successfully, blockheight =', seed);
 
             } catch (error) {
                 console.error('Error loading WASM module:', error);
             }
         }
 
-        reloadButton.addEventListener('click', () => loadWasmFromBase64(base64Wasm));
+        function updateSeedAndReload(newSeed) {
+            const seedInput = document.getElementById('seed-input');
+            seedInput.value = newSeed;
+            loadWasm(parseInt(newSeed, 10));
+        }
 
-        loadWasmFromBase64(base64Wasm);
+
+        const MAX_SEED_VALUE = 1000000;
+
+        document.getElementById('increment-seed').addEventListener('click', () => {
+            let currentSeed = parseInt(document.getElementById('seed-input').value, 10);
+            currentSeed = currentSeed < MAX_SEED_VALUE ? currentSeed + 1 : MAX_SEED_VALUE;
+            document.getElementById('seed-input').value = currentSeed;
+            updateSeedAndReload(currentSeed);
+        });
+
+        document.getElementById('decrement-seed').addEventListener('click', () => {
+            let currentSeed = parseInt(document.getElementById('seed-input').value, 10);
+            if (currentSeed > MAX_SEED_VALUE) {
+                currentSeed = MAX_SEED_VALUE - 1;
+            } else if (currentSeed > 0) {
+                currentSeed--;
+            }
+            document.getElementById('seed-input').value = currentSeed;
+            updateSeedAndReload(currentSeed);
+        });
+
+        document.getElementById('seed-input').addEventListener('keydown', (event) => {
+            if (event.key === 'Enter') {
+                let newSeed = parseInt(event.target.value, 10);
+                if (newSeed > MAX_SEED_VALUE) {
+                    event.preventDefault();
+                    event.target.value = MAX_SEED_VALUE;
+                    alert(`Seed cannot exceed ${MAX_SEED_VALUE}.`);
+                } else {
+                    updateSeedAndReload(newSeed);
+                }
+            }
+        });
+
+
+
+
+        const initialSeed = parseInt(document.getElementById('seed-input').value, 10);
+        loadWasm(initialSeed);
 
 
 
