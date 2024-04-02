@@ -7,7 +7,7 @@ const HEIGHT: u8 = 255;
 static mut TELEPORT: [(u8, u8, u8); MAX_TELEPORT] = [(0, 0, 0); MAX_TELEPORT];
 const MAX_TELEPORT: usize = 12;
 const TELEPORT_SIZE: u8 = 15;
-const TELEPORT_SPEED: u8 = 5;
+const TELEPORT_SPEED: u8 = 10;
 
 const GRID_WIDTH: usize = (WIDTH as usize) / TELEPORT_SIZE as usize;
 const GRID_HEIGHT: usize = (HEIGHT as usize) / TELEPORT_SIZE as usize;
@@ -143,6 +143,7 @@ fn update_tele_pos(teleporters: &mut [(u8, u8, u8); MAX_TELEPORT], key_state: &m
     }
 }
 
+#[inline]
 fn find_teleporter_targets(teleporters: &[(u8, u8, u8); MAX_TELEPORT]) -> Option<(usize, usize)> {
     let mut current = None;
     let mut next_target = None;
