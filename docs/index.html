@@ -76,7 +76,7 @@
         //This is a base64 encoded WebAssembly binary, it is 33% bigger than the original .wasm binary, im just testing it out.
 
         // Base64WasmStart 
-        const base64Wasm = 'AGFzbQEAAAABBwFgA39/fwADAgEABQMBABQGGQN/AEGogMAAC38AQazwzwALfwBBsPDPAAsHOgUGbWVtb3J5AgAJZ2FtZV9sb29wAAAGQlVGRkVSAwAKX19kYXRhX2VuZAMBC19faGVhcF9iYXNlAwIK+QgB9ggBBn8gAQRAQaSAwABBAToAAAsCQCACQQFHDQBBACECIABBAWoiAEENdCAAcyIAQRF2IABzIgBBBXQgAHMiBEEKcEECaiIBIQAgBCEDA0AgAEUEQCAEQQNsIARBCm5BHmxrQYiAwABqIQIDQCABQQtLDQMgAkEAOgAAIAJBA2ohAiABQQFqIQEMAAsACyACQSRHBEAgAkGCgMAAakECQQMgAkEDRhtBASACGzoAACACQYCAQGsgA0ENdCADcyIDQRF2IANzIgNBD3FBD2w6AAAgAkGBgMAAaiADQQV0IANzIgNBDXQgA3MiA0ERdiADcyIDQQ9xQQ9sOgAAIANBBXQgA3MhAyAAQQFrIQAgAkEDaiECDAELCwNADAALAAsCQEGkgMAALQAARQ0AQX8hAEECIQIDQCAAIQEgAkEmRg0BIABBAWohACACQYCAQGsgAkEDaiECLQAAQQFHDQALIAFBAmohAUEAIQICQAJAA0ACQCABRQRAIAJBJEcNAQwDC0EkIAJrQQNuIAFNDQIgAUEDbCACaiECCwJAAkAgAkGCgMAAai0AACIHDgUAAQEBAAELIAJBA2ohAkEAIQEMAQsLQQAhAUFcIQMgAkGAgEBrLQAAIQQgAkGBgMAAai0AACECA0AgAwRAAkAgA0GkgMAAai0AACAERw0AIANBpYDAAGotAAAgAkcNACADQaaAwABqLQAAIAdGDQQLIANBA2ohAyABQQFqIQEMAQsLA0AMAAsAC0EAIQFBAiECA0AgAkEmRg0CIAJBgIBAay0AACIEQQRLQQEgBHRBE3FFcg0BIAJBA2ohAiABQQFqIQEMAAsACwJAAkAgAEELTQRAIAFBA2wiAkGBgMAAai0AACEGIABBA2wiAEGBgMAAai0AACEFQQUhBAJAIABBgIBAayIILQAAIgcgAkGAgEBrIgItAAAiA2siACAAwUEPdSIAcyAAa0H//wNxQQVNBEAgBSAGayIAIADBQQ91IgBzIABrQf//A3FBBU0NAQsCQCADIAdNBEBB+wEhBCADIAdPDQELIAggBCAHajoAAAsgBSAGSQ0CIAUgBk0NBCAIIAVBBWs6AAEMBAsgCEEEOgACIAggBjoAASAIIAM6AAAgAkEBOgACIAFBC0YNAiABQQNsQYWAwABqIgAtAABFDQIgAEECOgAADAILA0AMAAsACyAIIAVBBWo6AAEMAQtBpIDAAEEAOgAAC0EEIQFBASECA0ACQCACQQFxBEAgAUH/AXEhBUEAIQQDQCAEIgBBJEYNAiAAQQNqIQQgAEGCgMAAai0AACAFRw0AIABBgYDAAGotAAAhByAAQYCAQGstAAAhA0EAIQYDQCAGQQ9GDQEgBiAHakH/AXFB/wFsIQFBACECA0AgAkEPRwRAIAEgAiADakH/AXFqIgBBgPwDTQRAIABBAnRBqIDAAGogBTYCAAsgAkEBaiECDAELCyAGQQFqIQYMAAsACwALDwsgBUEBayIAQQAgACAFTRshASAFQQBHIQIMAAsACw==';
+    const base64Wasm = 'AGFzbQEAAAABBwFgA39/fwADAgEABQMBABQGGQN/AEGogMAAC38AQazwzwALfwBBsPDPAAsHOgUGbWVtb3J5AgAJZ2FtZV9sb29wAAAGQlVGRkVSAwAKX19kYXRhX2VuZAMBC19faGVhcF9iYXNlAwIKzwkBzAkBBn8gAQRAQaSAwABBAToAAAsCQCACQQFHDQBBXCECA0AgAgRAIAJBpoDAAGpBADoAACACQaSAwABqQQA7AAAgAkEDaiECDAEFQfyPcCECA0AgAgRAIAJBrPDPAGpBADYCACACQQRqIQIMAQsLQQAhAiAAQQFqIgBBDXQgAHMiAEERdiAAcyIAQQV0IABzIgRBCnBBAmoiASEAIAQhAwNAIABFBEAgBEEDbCAEQQpuQR5sa0GIgMAAaiECA0AgAUELSw0FIAJBADoAACACQQNqIQIgAUEBaiEBDAALAAsgAkEkRwRAIAJBgoDAAGpBAkEDIAJBA0YbQQEgAhs6AAAgAkGAgEBrIANBDXQgA3MiA0ERdiADcyIDQQ9xQQ9sOgAAIAJBgYDAAGogA0EFdCADcyIDQQ10IANzIgNBEXYgA3MiA0EPcUEPbDoAACADQQV0IANzIQMgAEEBayEAIAJBA2ohAgwBCwsDQAwACwALAAsACwJAQaSAwAAtAABFDQBBfyEAQQIhAgNAIAAhASACQSZGDQEgAEEBaiEAIAJBgIBAayACQQNqIQItAABBAUcNAAsgAUECaiEBQQAhAgJAAkADQAJAIAFFBEAgAkEkRw0BDAMLQSQgAmtBA24gAU0NAiABQQNsIAJqIQILAkACQCACQYKAwABqLQAAIgcOBQABAQEAAQsgAkEDaiECQQAhAQwBCwtBACEBQVwhAyACQYCAQGstAAAhBCACQYGAwABqLQAAIQIDQCADBEACQCADQaSAwABqLQAAIARHDQAgA0GlgMAAai0AACACRw0AIANBpoDAAGotAAAgB0YNBAsgA0EDaiEDIAFBAWohAQwBCwsDQAwACwALQQAhAUECIQIDQCACQSZGDQIgAkGAgEBrLQAAIgRBBEtBASAEdEETcUVyDQEgAkEDaiECIAFBAWohAQwACwALAkACQCAAQQtNBEAgAUEDbCICQYGAwABqLQAAIQYgAEEDbCIAQYGAwABqLQAAIQVBBSEEAkAgAEGAgEBrIggtAAAiByACQYCAQGsiAi0AACIDayIAIADBQQ91IgBzIABrQf//A3FBBU0EQCAFIAZrIgAgAMFBD3UiAHMgAGtB//8DcUEFTQ0BCwJAIAMgB00EQEH7ASEEIAMgB08NAQsgCCAEIAdqOgAACyAFIAZJDQIgBSAGTQ0EIAggBUEFazoAAQwECyAIQQQ6AAIgCCAGOgABIAggAzoAACACQQE6AAIgAUELRg0CIAFBA2xBhYDAAGoiAC0AAEUNAiAAQQI6AAAMAgsDQAwACwALIAggBUEFajoAAQwBC0GkgMAAQQA6AAALQQQhAUEBIQIDQAJAIAJBAXEEQCABQf8BcSEFQQAhBANAIAQiAEEkRg0CIABBA2ohBCAAQYKAwABqLQAAIAVHDQAgAEGBgMAAai0AACEHIABBgIBAay0AACEDQQAhBgNAIAZBD0YNASAGIAdqQf8BcUH/AWwhAUEAIQIDQCACQQ9HBEAgASACIANqQf8BcWoiAEGA/ANNBEAgAEECdEGogMAAaiAFNgIACyACQQFqIQIMAQsLIAZBAWohBgwACwALAAsPCyAFQQFrIgBBACAAIAVNGyEBIAVBAEchAgwACwAL';
         // Base64WasmEnd
         const canvas = document.getElementById('canvas');
 
@@ -90,29 +90,20 @@
             3: [0, 255, 255, 255],  // Cyan //Teleporter
             4: [255, 165, 0, 255], // Orange //Completed Teleporter
         };
+        const seedInput = document.getElementById('seed-input');
+        let currentSeed = parseInt(seedInput.value, 10) || 0;
+        let frameCount = 0;
 
-
-        let cachedModule = null;
-
-        async function compileAndCacheModule() {
-            if (!cachedModule) {
-
+        async function loadWasm() {
+            try {
                 const binaryString = window.atob(base64Wasm);
                 const bytes = new Uint8Array(binaryString.length);
                 for (let i = 0; i < binaryString.length; i++) {
                     bytes[i] = binaryString.charCodeAt(i);
-                }
-
+                };
 
                 cachedModule = await WebAssembly.compile(bytes);
-            }
-            return cachedModule;
-        }
-
-        async function loadWasm(seed) {
-            try {
-                const module = await compileAndCacheModule();
-                const instance = await WebAssembly.instantiate(module);
+                const instance = await WebAssembly.instantiate(cachedModule);
                 const { exports: wasm } = instance;
                 const bufferPointer = wasm.BUFFER.value;
                 const imageData = new ImageData(canvasSize, canvasSize);
@@ -129,21 +120,19 @@
                     ctx.putImageData(imageData, 0, 0);
                 }
 
-                let frameCount = 0;
-
                 function gameLoop(currentTime) {
                     requestAnimationFrame(gameLoop);
                     const deltaTime = currentTime - lastFrameTime;
                     if (deltaTime < targetFrameTime) return;
                     lastFrameTime = currentTime - (deltaTime % targetFrameTime);
                     frameCount++;
-                    wasm.game_loop(seed, currentKeyPressed, frameCount);
+                    wasm.game_loop(currentSeed, currentKeyPressed, frameCount);
                     updateCanvas();
                     currentKeyPressed = false;
                 }
                 requestAnimationFrame(gameLoop);
 
-                const allowedKeys = new Set(['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'w', 'a', 's', 'd', ' ', 'MouseLeft', 'MouseRight', 'Touch']);
+                const allowedKeys = new Set(['ArrowUp', 'ArrowDown', 'w', 'a', 's', 'd', ' ', 'MouseLeft', 'MouseRight', 'Touch']);
 
                 document.addEventListener('keydown', (event) => {
                     if (allowedKeys.has(event.key)) {
@@ -170,7 +159,7 @@
                     }
                 }, { passive: false });
 
-                console.log('WASM module loaded successfully, blockheight =', seed);
+                console.log('WASM module loaded successfully, blockheight =', currentSeed);
 
             } catch (error) {
                 console.error('Error loading WASM module:', error);
@@ -178,57 +167,54 @@
             }
         }
 
-        function updateSeedAndReload(newSeed) {
-            const seedInput = document.getElementById('seed-input');
-            seedInput.value = newSeed;
-            loadWasm(parseInt(newSeed, 10));
-        }
 
 
 
         document.addEventListener('DOMContentLoaded', () => {
-            const seedInput = document.getElementById('seed-input');
             const maxSeedValue = 1000000;
-
 
             function updateSeedAndReload(newSeed) {
                 newSeed = Math.max(0, Math.min(maxSeedValue, newSeed));
                 seedInput.value = newSeed;
-                loadWasm(newSeed);
+                currentSeed = newSeed;
+                frameCount = 0;
             }
-
-
-            function handleSeedInputChange() {
-                const newSeed = parseInt(seedInput.value, 10) || 0;
-                updateSeedAndReload(newSeed);
-            }
-
 
             document.getElementById('increment-seed').addEventListener('click', () => {
-                let currentSeed = parseInt(seedInput.value, 10) || 0;
                 updateSeedAndReload(currentSeed + 1);
             });
 
             document.getElementById('decrement-seed').addEventListener('click', () => {
-                let currentSeed = parseInt(seedInput.value, 10) || 0;
                 updateSeedAndReload(currentSeed - 1);
             });
 
+            seedInput.addEventListener('change', () => {
+                updateSeedAndReload(parseInt(seedInput.value, 10) || 0);
+            });
 
-            seedInput.addEventListener('change', handleSeedInputChange);
             seedInput.addEventListener('keydown', (event) => {
                 if (event.key === 'Enter') {
                     event.preventDefault();
-                    handleSeedInputChange();
+                    updateSeedAndReload(parseInt(seedInput.value, 10) || 0);
                 }
             });
+            document.addEventListener('keydown', (event) => {
+                if (event.key === 'ArrowLeft') {
+                    event.preventDefault();
+                    updateSeedAndReload(currentSeed - 1);
+                }
+            }, { passive: false });
+            document.addEventListener('keydown', (event) => {
+                if (event.key === 'ArrowRight') {
+                    event.preventDefault();
+                    updateSeedAndReload(currentSeed + 1);
+                }
+            }, { passive: false });
 
 
-            const initialSeed = parseInt(seedInput.value, 10) || 0;
-            loadWasm(initialSeed);
+            loadWasm();
+
         });
-
-
 
 
     </script>

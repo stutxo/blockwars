@@ -36,6 +36,11 @@ unsafe extern "C" fn game_loop(seed: u32, key_pressed: bool, frame: u32) {
         PLAYER_MOVE = true;
     }
 
+    if frame == 1 {
+        TELEPORT.iter_mut().for_each(|t| *t = (0, 0, 0));
+        BUFFER.iter_mut().for_each(|b| *b = 0);
+    }
+
     frame_safe(
         &mut *ptr::addr_of_mut!(BUFFER),
         frame,
