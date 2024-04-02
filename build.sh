@@ -35,3 +35,4 @@ echo "Build complete! 🎉 ${BASE64_WASM: -10}"
 # Output the file size
 
 ls -lh target/wasm32-unknown-unknown/release/blockwars.wasm | awk '{print "\033[0;95mwasm size: " $5 "\033[0m"}'
+ls -lh docs/index.html | awk '{print "\033[0;91mindex.html size: " $5 "\033[0m"}'
