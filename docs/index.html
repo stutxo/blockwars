@@ -210,6 +210,17 @@
             }
         });
 
+        document.addEventListener('focusout', e => {
+            let newSeed = parseInt(event.target.value, 10);
+            if (newSeed > MAX_SEED_VALUE) {
+                event.preventDefault();
+                event.target.value = MAX_SEED_VALUE;
+                alert(`Seed cannot exceed ${MAX_SEED_VALUE}.`);
+            } else {
+                updateSeedAndReload(newSeed);
+            }
+        });
+
 
 
 
