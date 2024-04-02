@@ -277,7 +277,7 @@ fn render_frame(buffer: &mut [u32; 255 * 255], teleporters: &mut [(u8, u8, u8); 
                 teleport.1,
                 TELEPORT_SIZE,
                 TELEPORT_SIZE,
-                0xFFFFFF,
+                0xFF_FF_00_FF,
             );
         }
     }
@@ -289,7 +289,7 @@ fn render_frame(buffer: &mut [u32; 255 * 255], teleporters: &mut [(u8, u8, u8); 
                 teleport.1,
                 TELEPORT_SIZE,
                 TELEPORT_SIZE,
-                0xFF_FF_00_FF,
+                0xFFFFFF,
             );
         }
     }
