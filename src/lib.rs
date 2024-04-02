@@ -31,7 +31,7 @@ static mut BUFFER: [u32; 255 * 255] = [0; 255 * 255];
 
 #[inline]
 #[no_mangle]
-unsafe extern "C" fn game_loop(seed: u32, key_pressed: bool, frame: u32) {
+unsafe extern "C" fn blockwars(seed: u32, key_pressed: bool, frame: u32) {
     if key_pressed {
         PLAYER_MOVE = true;
     }
