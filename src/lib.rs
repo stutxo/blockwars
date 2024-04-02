@@ -47,7 +47,7 @@ unsafe extern "C" fn seed(value: u32) {
 
 #[inline]
 #[no_mangle]
-unsafe extern "C" fn game_loop() -> u32 {
+unsafe extern "C" fn game_loop() {
     FRAME += 1;
     frame_safe(
         &mut *ptr::addr_of_mut!(BUFFER),
@@ -57,8 +57,6 @@ unsafe extern "C" fn game_loop() -> u32 {
         &mut *ptr::addr_of_mut!(TELEPORT),
         &mut *ptr::addr_of_mut!(GRID),
     );
-
-    1
 }
 
 //no unsafe code below this point
@@ -245,53 +243,28 @@ fn find_teleporter_targets(teleporters: &[(u8, u8, u8); MAX_TELEPORT]) -> Option
 
 #[inline]
 fn render_frame(buffer: &mut [u32; 255 * 255], teleporters: &mut [(u8, u8, u8); MAX_TELEPORT]) {
-    buffer.fill(0xFF_00_00_00);
+    buffer.fill(0);
 
-    let mut draw_rect = |x: u8, y: u8, width: u8, height: u8, color: u32| {
+    let mut draw_rect = |x: u8, y: u8, width: u8, height: u8, state: u32| {
         for dy in 0..height {
             for dx in 0..width {
                 let index = usize::from(y + dy) * WIDTH as usize + usize::from(x + dx);
                 if index < buffer.len() {
-                    buffer[index] = color;
+                    buffer[index] = state;
                 }
             }
         }
     };
 
     for teleport in teleporters.iter() {
-        if teleport.2 == 1 {
-            draw_rect(
-                teleport.0,
-                teleport.1,
-                TELEPORT_SIZE,
-                TELEPORT_SIZE,
-                0xFF00FF00,
-            );
-        }
-    }
+        let state = match teleport.2 {
+            1 => 1,
+            2 => 2,
+            3 => 3,
+            _ => 0,
+        };
 
-    for teleport in teleporters.iter() {
-        if teleport.2 == 3 {
-            draw_rect(
-                teleport.0,
-                teleport.1,
-                TELEPORT_SIZE,
-                TELEPORT_SIZE,
-                0xFF_FF_00_FF,
-            );
-        }
-    }
-
-    for teleport in teleporters.iter() {
-        if teleport.2 == 2 {
-            draw_rect(
-                teleport.0,
-                teleport.1,
-                TELEPORT_SIZE,
-                TELEPORT_SIZE,
-                0xFFFFFF,
-            );
-        }
+        draw_rect(teleport.0, teleport.1, TELEPORT_SIZE, TELEPORT_SIZE, state);
     }
 }
 

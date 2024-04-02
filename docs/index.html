@@ -17,95 +17,119 @@
             background-color: #f0f0f0;
         }
 
-        #canvas {
-            max-width: 100%;
-            height: auto;
+        #game-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
         }
 
-        .github-container {
-            position: absolute;
-            top: 0;
-            right: 40%;
+        #canvas {
+            max-width: 100% !important;
+            height: 100% !important;
+        }
+
+        #reload-wasm {
+            margin-top: 20px;
+            font-size: 24px;
+            cursor: pointer;
+            border: none;
+            background: none;
+            color: inherit;
+            touch-action: manipulation;
         }
     </style>
-    <script async defer src="https://buttons.github.io/buttons.js"></script>
-
-    <script type="module">
-        (async () => {
-            const { instance: a } = await WebAssembly.instantiateStreaming(fetch("./blockwars.wasm")),
-                w = 255,
-                c = document.getElementById("canvas");
-            c.width = w;
-            c.height = w;
-            a.exports.seed(Math.random() * 1000 | 0);
-            const b = a.exports.BUFFER.value,
-                i = new ImageData(new Uint8ClampedArray(a.exports.memory.buffer, b, 4 * w * w), w),
-                d = c.getContext("2d");
-
-            let lastFrameTime = 0;
-            const targetFPS = 60;
-            const targetFrameTime = 1000 / targetFPS;
-
-            const r = (currentTime) => {
-                requestAnimationFrame(r);
-
-                const deltaTime = currentTime - lastFrameTime;
-
-                if (deltaTime < targetFrameTime) {
-                    return;
-                }
-
-                lastFrameTime = currentTime - (deltaTime % targetFrameTime);
-
-                const game_loop = a.exports.game_loop();
-                console.log(game_loop);
-                d.putImageData(i, 0, 0);
-            };
-            requestAnimationFrame(r);
-
-
-
-
-            const allowedKeys = new Set(['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'w', 'a', 's', 'd', ' ', 'MouseLeft', 'MouseRight', 'Touch']);
-
-            document.addEventListener('keydown', (event) => {
-                if (allowedKeys.has(event.key)) {
-                    toggleDirectionAndMove();
-                    event.preventDefault();
-                }
-            }, { passive: false });
-
-            document.getElementById('game-container').addEventListener('mousedown', (event) => {
-                const mouseKey = event.button === 0 ? 'MouseLeft' : event.button === 2 ? 'MouseRight' : '';
-                if (allowedKeys.has(mouseKey)) {
-                    toggleDirectionAndMove();
-                    event.preventDefault();
-                }
-            }, { passive: false });
-
-            document.getElementById('game-container').addEventListener('touchstart', (event) => {
-                toggleDirectionAndMove();
-                event.preventDefault();
-            }, { passive: false });
-
-            function toggleDirectionAndMove() {
-                a.exports.key_pressed();
-            }
-
-
-        })();
-    </script>
 </head>
 
-<body>
-    <div class="github-container">
-        <a class="github-button" href="https://github.com/stutxo/blockwars" data-show-count="true"
-            aria-label="Star stutxo/blockwars on GitHub"></a>
-    </div>
+<script async defer src="https://buttons.github.io/buttons.js"></script>
 
+<body>
     <div id="game-container">
         <canvas id="canvas"></canvas>
+        <br />
+        <button id="reload-wasm">🔁</button>
+        <br />
+        <div class="github-container">
+            <a id="github-button" class="github-button" href="https://github.com/stutxo/blockwars"
+                data-show-count="true" aria-label="Star stutxo/blockwars on GitHub"></a>
+        </div>
     </div>
+    <script>
+        const canvas = document.getElementById('canvas');
+        const reloadButton = document.getElementById('reload-wasm');
+        const canvasSize = 255;
+        canvas.width = canvas.height = canvasSize;
+        const ctx = canvas.getContext('2d');
+        const stateToColor = {
+            0: [0, 0, 0, 255],
+            1: [255, 255, 255, 255],
+            2: [255, 165, 0, 255],
+            3: [0, 255, 0, 255],
+        };
+
+        async function loadWasmModule() {
+            try {
+                const { instance } = await WebAssembly.instantiateStreaming(fetch("./blockwars.wasm"));
+                const { exports: wasm } = instance;
+                wasm.seed(Math.random() * 1000 | 0);
+                const bufferPointer = wasm.BUFFER.value;
+                const imageData = new ImageData(canvasSize, canvasSize);
+                const targetFrameTime = 1000 / 60; // Target 60 FPS
+                let lastFrameTime = 0;
+
+                function updateCanvas() {
+                    const buffer = new Uint32Array(wasm.memory.buffer, bufferPointer, canvasSize * canvasSize);
+                    for (let i = 0; i < buffer.length; i++) {
+                        const color = stateToColor[buffer[i]] || [0, 0, 0, 0];
+                        imageData.data.set(color, i * 4);
+                    }
+                    ctx.putImageData(imageData, 0, 0);
+                }
+
+                function gameLoop(currentTime) {
+                    requestAnimationFrame(gameLoop);
+                    const deltaTime = currentTime - lastFrameTime;
+                    if (deltaTime < targetFrameTime) return;
+                    lastFrameTime = currentTime - (deltaTime % targetFrameTime);
+                    wasm.game_loop();
+                    updateCanvas();
+                }
+                requestAnimationFrame(gameLoop);
+
+                const allowedKeys = new Set(['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'w', 'a', 's', 'd', ' ', 'MouseLeft', 'MouseRight', 'Touch']);
+
+                document.addEventListener('keydown', (event) => {
+                    if (allowedKeys.has(event.key)) {
+                        wasm.key_pressed();
+                        event.preventDefault();
+                    }
+                }, { passive: false });
+
+                document.addEventListener('mousedown', (event) => {
+                    if (!(event.target.closest('.github-container') || event.target.id === 'reload-wasm')) {
+                        wasm.key_pressed();
+                        event.preventDefault();
+                    }
+                }, { passive: false });
+
+                document.addEventListener('touchstart', (event) => {
+                    if (!(event.target.closest('.github-container') || event.target.id === 'reload-wasm')) {
+                        wasm.key_pressed();
+                        event.preventDefault();
+                    }
+                }, { passive: false });
+
+            } catch (error) {
+                alert('Failed to load WASM module. unsupported browser/device?');
+                console.error('Failed to load WASM module:', error);
+            }
+        }
+
+
+        reloadButton.addEventListener('click', loadWasmModule);
+        loadWasmModule();
+
+
+    </script>
 </body>
 
 </html>
