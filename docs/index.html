@@ -76,7 +76,7 @@
         //This is a base64 encoded WebAssembly binary, it is 33% bigger than the original .wasm binary, im just testing it out.
 
         // Base64WasmStart 
-        const base64Wasm = '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';
+    const base64Wasm = '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';
         // Base64WasmEnd
         const canvas = document.getElementById('canvas');
 
@@ -90,32 +90,33 @@
             3: [0, 255, 0, 255],
         };
 
-        const wasmBinary = (function () {
-            const binaryString = window.atob(base64Wasm);
-            const bytes = new Uint8Array(binaryString.length);
-            for (let i = 0; i < binaryString.length; i++) {
-                bytes[i] = binaryString.charCodeAt(i);
-            }
-            return bytes;
-        })();
+        let cachedModule = null;
 
-        let wasmInstance = null;
+        async function compileAndCacheModule() {
+            if (!cachedModule) {
+
+                const binaryString = window.atob(base64Wasm);
+                const bytes = new Uint8Array(binaryString.length);
+                for (let i = 0; i < binaryString.length; i++) {
+                    bytes[i] = binaryString.charCodeAt(i);
+                }
+
+
+                cachedModule = await WebAssembly.compile(bytes);
+            }
+            return cachedModule;
+        }
 
         async function loadWasm(seed) {
             try {
-
-                if (wasmInstance !== null) {
-                    // Any required cleanup here
-                    wasmInstance = null;
-                }
-
-                const { instance } = await WebAssembly.instantiate(wasmBinary);
+                const module = await compileAndCacheModule();
+                const instance = await WebAssembly.instantiate(module);
                 const { exports: wasm } = instance;
-                wasm.seed(seed);
                 const bufferPointer = wasm.BUFFER.value;
                 const imageData = new ImageData(canvasSize, canvasSize);
                 const targetFrameTime = 1000 / 60; // Target 60 FPS
                 let lastFrameTime = 0;
+                let currentKeyPressed = false;
 
                 function updateCanvas() {
                     const buffer = new Uint32Array(wasm.memory.buffer, bufferPointer, canvasSize * canvasSize);
@@ -126,13 +127,17 @@
                     ctx.putImageData(imageData, 0, 0);
                 }
 
+                let frameCount = 0;
+
                 function gameLoop(currentTime) {
                     requestAnimationFrame(gameLoop);
                     const deltaTime = currentTime - lastFrameTime;
                     if (deltaTime < targetFrameTime) return;
                     lastFrameTime = currentTime - (deltaTime % targetFrameTime);
-                    wasm.game_loop();
+                    frameCount++;
+                    wasm.game_loop(seed, currentKeyPressed, frameCount);
                     updateCanvas();
+                    currentKeyPressed = false;
                 }
                 requestAnimationFrame(gameLoop);
 
@@ -140,7 +145,7 @@
 
                 document.addEventListener('keydown', (event) => {
                     if (allowedKeys.has(event.key)) {
-                        wasm.key_pressed();
+                        currentKeyPressed = true;
                         event.preventDefault();
                     }
                 }, { passive: false });
@@ -149,7 +154,7 @@
                     if (event.target.closest('.github-container') || event.target.closest('.seed-container')) {
                         return;
                     } else {
-                        wasm.key_pressed();
+                        currentKeyPressed = true;
                         event.preventDefault();
                     }
                 }, { passive: false });
@@ -158,7 +163,7 @@
                     if (event.target.closest('.github-container') || event.target.closest('.seed-container')) {
                         return;
                     } else {
-                        wasm.key_pressed();
+                        currentKeyPressed = true;
                         event.preventDefault();
                     }
                 }, { passive: false });

@@ -13,9 +13,7 @@ static mut GRID: [bool; GRID_WIDTH * GRID_HEIGHT] = [false; GRID_WIDTH * GRID_HE
 const GRID_WIDTH: usize = (WIDTH as usize) / TELEPORT_SIZE as usize;
 const GRID_HEIGHT: usize = (HEIGHT as usize) / TELEPORT_SIZE as usize;
 
-static mut KEY_STATE: bool = false;
-static mut FRAME: u32 = 0;
-static mut SEED: u32 = 0;
+static mut PLAYER_MOVE: bool = false;
 
 //https://blog.orhun.dev/zero-deps-random-in-rust/
 #[inline]
@@ -34,27 +32,18 @@ static mut BUFFER: [u32; 255 * 255] = [0; 255 * 255];
 
 #[inline]
 #[no_mangle]
-unsafe extern "C" fn key_pressed() {
-    KEY_STATE = true;
-}
+unsafe extern "C" fn game_loop(seed: u32, key_pressed: bool, frame: u32) {
+    if key_pressed {
+        PLAYER_MOVE = true;
+    }
 
-#[inline]
-#[no_mangle]
-unsafe extern "C" fn seed(value: u32) {
-    SEED = value;
-}
-
-#[inline]
-#[no_mangle]
-unsafe extern "C" fn game_loop() {
-    FRAME += 1;
     frame_safe(
         &mut *ptr::addr_of_mut!(BUFFER),
-        FRAME,
-        &mut *ptr::addr_of_mut!(KEY_STATE),
-        SEED,
+        frame,
+        seed,
         &mut *ptr::addr_of_mut!(TELEPORT),
         &mut *ptr::addr_of_mut!(GRID),
+        &mut *ptr::addr_of_mut!(PLAYER_MOVE),
     );
 }
 
@@ -63,10 +52,10 @@ unsafe extern "C" fn game_loop() {
 fn frame_safe(
     buffer: &mut [u32; 255 * 255],
     frame: u32,
-    key_state: &mut bool,
     seed: u32,
     teleport: &mut [(u8, u8, u8); MAX_TELEPORT],
     grid: &mut [bool; GRID_WIDTH * GRID_HEIGHT],
+    key_state: &mut bool,
 ) {
     let mut rng = rng(seed, frame);
 
@@ -74,7 +63,9 @@ fn frame_safe(
         spawn_teleporters_on_grid(teleport, &mut rng, grid);
     }
 
-    update_teleporter_pos(teleport, key_state);
+    if *key_state {
+        update_teleporter_pos(teleport, key_state);
+    }
     render_frame(buffer, teleport);
 }
 
