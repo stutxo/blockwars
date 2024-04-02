@@ -29,7 +29,6 @@ fn rng(seed: u32, frame: u32) -> impl Iterator<Item = u32> {
     })
 }
 
-//accessed by javascript
 #[no_mangle]
 static mut BUFFER: [u32; 255 * 255] = [0; 255 * 255];
 
