@@ -40,18 +40,21 @@
     </style>
 </head>
 
-<script async defer src="https://buttons.github.io/buttons.js"></script>
-
 <body>
+
     <div id="game-container">
+        <h1 style="text-align: center; color: #333;">blockwars.gg</h1>
         <canvas id="canvas"></canvas>
         <br />
         <button id="reload-wasm">🔁</button>
         <br />
         <div class="github-container">
-            <a id="github-button" class="github-button" href="https://github.com/stutxo/blockwars"
-                data-show-count="true" aria-label="Star stutxo/blockwars on GitHub"></a>
+            <a href="https://github.com/stutxo/blockwars" id="github-link"
+                style="text-decoration: underline; color: blue;">
+                🐱 GitHub
+            </a>
         </div>
+
     </div>
     <script>
         //This is a base64 encoded WebAssembly binary, it is 33% bigger than the original .wasm binary, im just testing it out.
