@@ -20,6 +20,7 @@
         #canvas {
             max-width: 100%;
             height: auto;
+            transform: scale(2);
         }
 
         .github-container {
@@ -37,6 +38,7 @@
                 c = document.getElementById("canvas");
             c.width = w;
             c.height = w;
+            a.exports.seed(Math.random() * 1000 | 0);
             const b = a.exports.BUFFER.value,
                 i = new ImageData(new Uint8ClampedArray(a.exports.memory.buffer, b, 4 * w * w), w),
                 d = c.getContext("2d");
@@ -63,7 +65,7 @@
             requestAnimationFrame(r);
 
 
-            var currentDirectionIsLeft = true;
+
 
             const allowedKeys = new Set(['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'w', 'a', 's', 'd', ' ', 'MouseLeft', 'MouseRight', 'Touch']);
 
@@ -74,7 +76,7 @@
                 }
             }, { passive: false });
 
-            document.addEventListener('mousedown', (event) => {
+            document.getElementById('game-container').addEventListener('mousedown', (event) => {
                 const mouseKey = event.button === 0 ? 'MouseLeft' : event.button === 2 ? 'MouseRight' : '';
                 if (allowedKeys.has(mouseKey)) {
                     toggleDirectionAndMove();
@@ -82,20 +84,13 @@
                 }
             }, { passive: false });
 
-            document.addEventListener('touchstart', (event) => {
-                if (allowedKeys.has('Touch')) {
-                    toggleDirectionAndMove();
-                    event.preventDefault();
-                }
+            document.getElementById('game-container').addEventListener('touchstart', (event) => {
+                toggleDirectionAndMove();
+                event.preventDefault();
             }, { passive: false });
 
             function toggleDirectionAndMove() {
-                if (currentDirectionIsLeft) {
-                    a.exports.key_pressed(1);
-                } else {
-                    a.exports.key_pressed(2);
-                }
-                currentDirectionIsLeft = !currentDirectionIsLeft;
+                a.exports.key_pressed();
             }
 
 
