@@ -151,6 +151,9 @@
                     if (allowedKeys.has(event.key)) {
                         currentKeyPressed = true;
                         event.preventDefault();
+                        if (document.activeElement instanceof HTMLButtonElement) {
+                            document.activeElement.blur();
+                        }
                     }
                 }, { passive: false });
 
