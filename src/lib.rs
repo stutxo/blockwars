@@ -41,6 +41,7 @@ unsafe extern "C" fn blockwars(seed: u32, key_pressed: bool, frame: u32) {
     if frame == 1 {
         TELEPORT.iter_mut().for_each(|t| *t = None);
         BUFFER.iter_mut().for_each(|b| *b = 0);
+        PLAYER_MOVE = false;
     }
 
     frame_safe(
