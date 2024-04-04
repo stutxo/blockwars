@@ -17,11 +17,6 @@
             background-color: #f0f0f0;
         }
 
-        #game-container {
-            display: flex;
-            flex-direction: column;
-        }
-
         #canvas {
             max-width: 100% !important;
             height: auto !important;
@@ -34,7 +29,6 @@
             border: none;
             cursor: pointer;
             font-size: 2rem;
-            padding: 20px;
             user-select: none;
             display: flex;
             align-items: center;
@@ -72,7 +66,13 @@
 
     <div id="game-container">
         <h1 style="text-align: center; color: #333;">blockwars.gg</h1>
+
         <div class="block-container">
+            <div>
+                <a style="text-align: center; color: #333;">block</a>
+            </div>
+        </div>
+        <div class="input-container" style="display: flex; justify-content: center; align-items: center;">
             <button id="decrement-block">◀</button>
             <input type="number" id="block-input" value="0" inputmode="numeric" />
             <button id="increment-block">▶</button>
@@ -168,24 +168,20 @@
                 }, { passive: false });
 
                 document.addEventListener('mousedown', (event) => {
-                    if (event.target.closest('.github-container') || event.target.closest('.block-container')) {
-                        return;
-                    } else {
+                    if (event.target.closest('canvas')) {
                         currentKeyPressed = true;
                         event.preventDefault();
                     }
                 }, { passive: false });
 
                 document.addEventListener('touchstart', (event) => {
-                    if (event.target.closest('.github-container') || event.target.closest('.block-container')) {
-                        return;
-                    } else {
+                    if (event.target.closest('canvas')) {
                         currentKeyPressed = true;
                         event.preventDefault();
                     }
                 }, { passive: false });
 
-                console.log('WASM module loaded successfully, block header =', blockHash);
+                console.log('WASM module loaded successfully');
 
             } catch (error) {
                 console.error('Error loading WASM module:', error);
@@ -203,7 +199,7 @@
 
                 if (cachedHash) {
 
-                    console.log('Using cached block hash for block height', blockHeight, 'hash:', cachedHash);
+                    console.log('Using cached block hash for block height', blockHeight);
                     blockHash = parseInt(cachedHash, 10);
                     frameCount = 0;
                     lastWorkingBlockHeight = blockHeight;
@@ -225,7 +221,7 @@
                     const u32Value = parseInt(last7Chars, 16);
 
                     blockHash = u32Value;
-                    console.log(blockHeight, blockHash);
+                    console.log(blockHeight, hash);
 
                     localStorage.setItem(`blockHash_${blockHeight}`, blockHash.toString());
 
@@ -251,6 +247,7 @@
                     blockHeight = blocksTipHeight;
                     newLevel();
                 } catch (error) {
+                    alert(`Failed to fetch current block tip height`);
                     console.error("Failed to fetch current block data:", error);
                 }
             }
