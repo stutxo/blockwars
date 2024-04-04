@@ -19,7 +19,7 @@ static mut PLAYER_MOVE: bool = false;
 //https://blog.orhun.dev/zero-deps-random-in-rust/
 #[inline]
 fn rng(seed: u32, frame: u32) -> impl Iterator<Item = u32> {
-    let mut random = seed + frame;
+    let mut random = seed ^ frame;
     repeat_with(move || {
         random ^= random << 13;
         random ^= random >> 17;

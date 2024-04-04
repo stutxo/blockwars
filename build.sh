@@ -10,7 +10,7 @@ cargo build --target wasm32-unknown-unknown --release
 echo "Stripping WASM file..."
 wasm-strip target/wasm32-unknown-unknown/release/blockwars.wasm
 
-# Optimize the WASM file with wasm-opt
+# # Optimize the WASM file with wasm-opt
 echo "Optimizing WASM file..."
 wasm-opt -o target/wasm32-unknown-unknown/release/blockwars.wasm -Oz target/wasm32-unknown-unknown/release/blockwars.wasm
 

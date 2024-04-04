@@ -27,8 +27,8 @@
             height: auto !important;
         }
 
-        #increment-seed,
-        #decrement-seed {
+        #increment-block,
+        #decrement-block {
             touch-action: manipulation;
             background-color: transparent;
             border: none;
@@ -42,25 +42,25 @@
         }
 
 
-        #seed-control {
+        #block-control {
             display: flex;
             align-items: center;
             margin-bottom: 20px;
         }
 
-        #seed-input::-webkit-inner-spin-button,
-        #seed-input::-webkit-outer-spin-button {
+        #block-input::-webkit-inner-spin-button,
+        #block-input::-webkit-outer-spin-button {
             -webkit-appearance: none;
             margin: 0;
         }
 
-        #seed-input {
+        #block-input {
             width: 100px;
             text-align: center;
             padding: 5px;
         }
 
-        .seed-container {
+        .block-container {
             display: flex;
             justify-content: center;
             align-items: center;
@@ -72,10 +72,10 @@
 
     <div id="game-container">
         <h1 style="text-align: center; color: #333;">blockwars.gg</h1>
-        <div class="seed-container">
-            <button id="decrement-seed">◀</button>
-            <input type="number" id="seed-input" value="0" inputmode="numeric" />
-            <button id="increment-seed">▶</button>
+        <div class="block-container">
+            <button id="decrement-block">◀</button>
+            <input type="number" id="block-input" value="0" inputmode="numeric" />
+            <button id="increment-block">▶</button>
         </div>
         <br />
         <canvas id="canvas"></canvas>
@@ -86,10 +86,11 @@
         </div>
     </div>
 
+    <script src="https://mempool.space/mempool.js"></script>
     <script>
         //This is a base64 encoded WebAssembly binary, it is 33% bigger than the original .wasm binary, im just testing it out.
         // Base64WasmStart 
-        const base64Wasm = 'AGFzbQEAAAABBwFgA39/fwADAgEABQMBABQGGQN/AEHEgcAAC38AQcjxzwALfwBB0PHPAAsHOgUGbWVtb3J5AgAJYmxvY2t3YXJzAAAGQlVGRkVSAwAKX19kYXRhX2VuZAMBC19faGVhcF9iYXNlAwIK8gkB7wkCA38KfSABBEBBwIHAAEEBOgAACwJAIAJBAUcNAEHAfiECA0AgAgRAIAJBwIHAAGpBADYCACACQRBqIQIMAQVB/I9wIQIDQCACBEAgAkHI8c8AakEANgIAIAJBBGohAgwBCwtBACECIABBAWoiAEENdCAAcyIAQRF2IABzIgBBBXQgAHMiBEEKcEECaiIBIQAgBCEDA0AgAEUEQCAEQQR0IARBCm5BoAFsa0GggMAAaiECA0AgAUELSw0FIAJBADYCACACQRBqIQIgAUEBaiEBDAALAAsgAkHAAUcEQCACQYCAQGtBATYCACACQYyAwABqQwAAAEBDAABAQCACQRBGG0MAAIA/IAIbOAIAIAJBhIDAAGogA0ENdCADcyIDQRF2IANzIgNBBXQgA3MiA0EYcEEKbLM4AgAgAkGIgMAAaiADQQ10IANzIgNBEXYgA3MiA0EFdCADcyIDQRhwQQpsszgCACAAQQFrIQAgAkEQaiECDAELCwNADAALAAsACwALAkBBwIHAAC0AAEUNAEHAfiECQQAhAQNAIAJFDQECQCACQcCBwABqKAIAQQFGBEAgAkHMgcAAaioCAEMAAIA/Ww0BCyACQRBqIQIgAUEBaiEBDAELC0EAIQBBwH4hAgNAIAJFDQECQCACQcCBwABqKAIAQQFGBEAgAkHMgcAAaioCAEMAAABAWw0BCyACQRBqIQIgAEEBaiEADAELCyABQQR0IgNBgIBAayIBKAIAQQFHDQAgAEEEdCIEQYCAQGsiAigCAEEBRw0AAkAgBEGEgMAAaioCACIKIANBhIDAAGoqAgAiDpMiCyALlCAEQYiAwABqKgIAIgwgA0GIgMAAaioCACIPkyINIA2UkiIHQwAAAABfIAdDAACAP1tyDQAgB0MAAAA/lEMAAIA/kiEJIAchBgNAIAkiCCAGXQRAIAggByAIlZJDAAAAP5QhCSAIIQYMAQsLIAZDAAAgQV8NACABQQE2AgAgASAPIA0gBpVDAAAgQZSSOAIIIAEgDiALIAaVQwAAIEGUkjgCBAwBCyABQQE2AgAgASAKOAIEIAEgDDgCCCABQYCAgIQENgIMIAJBATYCACACIAo4AgQgAiAMOAIIIAJBgICA/AM2AgwgAEEBaiIAQQAgAEEMRxtBBHRBgIBAayIAKAIABEAgAEGAgICABDYCDCAAQQE2AgALQcCBwABBADoAAAtBBCEEQQEhAgNAAkAgAkEBcQRAIASzIQhBACEBA0AgASIAQcABRg0CIABBEGohASAAQYCAQGsoAgBFDQAgAEGMgMAAaioCACAIXA0AIABBiIDAAGoqAgAhByAAQYSAwABqKgIAIQlBACEDA0AgA0H/AXEiAEEJSw0BIAcgALOSIgZDAAAAAGAhAEEAIQJBfwJ/IAZDAACAT10gBkMAAAAAYHEEQCAGqQwBC0EAC0EAIAAbIAZD//9/T14bQf8BbCEAA0AgAkH/AXEiBUEJTQRAIAkgBbOSIgZDAAAAAGAhBSACQQFqIQJBfwJ/IAZDAACAT10gBkMAAAAAYHEEQCAGqQwBC0EAC0EAIAUbIAZD//9/T14bIABqIgVBgPwDSw0BIAVBAnRBxIHAAGogBDYCAAwBCwsgA0EBaiEDDAALAAsACw8LIARBAEchAiAEQQFrIgBBACAAIARNGyEEDAALAAs=';
+        const base64Wasm = 'AGFzbQEAAAABBwFgA39/fwADAgEABQMBABQGGQN/AEHEgcAAC38AQcjxzwALfwBB0PHPAAsHOgUGbWVtb3J5AgAJYmxvY2t3YXJzAAAGQlVGRkVSAwAKX19kYXRhX2VuZAMBC19faGVhcF9iYXNlAwIK8gkB7wkCA38KfSABBEBBwIHAAEEBOgAACwJAIAJBAUcNAEHAfiECA0AgAgRAIAJBwIHAAGpBADYCACACQRBqIQIMAQVB/I9wIQIDQCACBEAgAkHI8c8AakEANgIAIAJBBGohAgwBCwtBACECIABBAXMiAEENdCAAcyIAQRF2IABzIgBBBXQgAHMiBEEKcEECaiIBIQAgBCEDA0AgAEUEQCAEQQR0IARBCm5BoAFsa0GggMAAaiECA0AgAUELSw0FIAJBADYCACACQRBqIQIgAUEBaiEBDAALAAsgAkHAAUcEQCACQYCAQGtBATYCACACQYyAwABqQwAAAEBDAABAQCACQRBGG0MAAIA/IAIbOAIAIAJBhIDAAGogA0ENdCADcyIDQRF2IANzIgNBBXQgA3MiA0EYcEEKbLM4AgAgAkGIgMAAaiADQQ10IANzIgNBEXYgA3MiA0EFdCADcyIDQRhwQQpsszgCACAAQQFrIQAgAkEQaiECDAELCwNADAALAAsACwALAkBBwIHAAC0AAEUNAEHAfiECQQAhAQNAIAJFDQECQCACQcCBwABqKAIAQQFGBEAgAkHMgcAAaioCAEMAAIA/Ww0BCyACQRBqIQIgAUEBaiEBDAELC0EAIQBBwH4hAgNAIAJFDQECQCACQcCBwABqKAIAQQFGBEAgAkHMgcAAaioCAEMAAABAWw0BCyACQRBqIQIgAEEBaiEADAELCyABQQR0IgNBgIBAayIBKAIAQQFHDQAgAEEEdCIEQYCAQGsiAigCAEEBRw0AAkAgBEGEgMAAaioCACIKIANBhIDAAGoqAgAiDpMiCyALlCAEQYiAwABqKgIAIgwgA0GIgMAAaioCACIPkyINIA2UkiIHQwAAAABfIAdDAACAP1tyDQAgB0MAAAA/lEMAAIA/kiEJIAchBgNAIAkiCCAGXQRAIAggByAIlZJDAAAAP5QhCSAIIQYMAQsLIAZDAAAgQV8NACABQQE2AgAgASAPIA0gBpVDAAAgQZSSOAIIIAEgDiALIAaVQwAAIEGUkjgCBAwBCyABQQE2AgAgASAKOAIEIAEgDDgCCCABQYCAgIQENgIMIAJBATYCACACIAo4AgQgAiAMOAIIIAJBgICA/AM2AgwgAEEBaiIAQQAgAEEMRxtBBHRBgIBAayIAKAIABEAgAEGAgICABDYCDCAAQQE2AgALQcCBwABBADoAAAtBBCEEQQEhAgNAAkAgAkEBcQRAIASzIQhBACEBA0AgASIAQcABRg0CIABBEGohASAAQYCAQGsoAgBFDQAgAEGMgMAAaioCACAIXA0AIABBiIDAAGoqAgAhByAAQYSAwABqKgIAIQlBACEDA0AgA0H/AXEiAEEJSw0BIAcgALOSIgZDAAAAAGAhAEEAIQJBfwJ/IAZDAACAT10gBkMAAAAAYHEEQCAGqQwBC0EAC0EAIAAbIAZD//9/T14bQf8BbCEAA0AgAkH/AXEiBUEJTQRAIAkgBbOSIgZDAAAAAGAhBSACQQFqIQJBfwJ/IAZDAACAT10gBkMAAAAAYHEEQCAGqQwBC0EAC0EAIAUbIAZD//9/T14bIABqIgVBgPwDSw0BIAVBAnRBxIHAAGogBDYCAAwBCwsgA0EBaiEDDAALAAsACw8LIARBAEchAiAEQQFrIgBBACAAIARNGyEEDAALAAs=';
         // Base64WasmEnd
         const canvas = document.getElementById('canvas');
 
@@ -103,11 +104,17 @@
             3: [0, 255, 255, 255],  // Cyan //Teleporter
             4: [255, 165, 0, 255], // Orange //Completed Teleporter
         };
-        const seedInput = document.getElementById('seed-input');
-        let currentSeed = parseInt(seedInput.value, 10) || 0;
+        const blockHeightInput = document.getElementById('block-input');
+
+
+        let blockHash = 0;
+        let blockHeight = 0;
+        let lastWorkingBlockHeight = 0;
         let frameCount = 0;
 
+
         async function loadWasm() {
+            get_current_block();
             try {
                 const binaryString = window.atob(base64Wasm);
                 const bytes = new Uint8Array(binaryString.length);
@@ -123,6 +130,7 @@
                 const targetFrameTime = 1000 / 60; // Target 60 FPS
                 let lastFrameTime = 0;
                 let currentKeyPressed = false;
+                let lastTime = performance.now();
 
                 function updateCanvas() {
                     const buffer = new Uint32Array(wasm.memory.buffer, bufferPointer, canvasSize * canvasSize);
@@ -138,9 +146,11 @@
                     const deltaTime = currentTime - lastFrameTime;
                     if (deltaTime < targetFrameTime) return;
                     lastFrameTime = currentTime - (deltaTime % targetFrameTime);
-                    frameCount++;
-                    wasm.blockwars(currentSeed, currentKeyPressed, frameCount);
+
+                    let seed = wasm.blockwars(blockHash, currentKeyPressed, frameCount);
+
                     updateCanvas();
+                    frameCount++;
                     currentKeyPressed = false;
                 }
                 requestAnimationFrame(gameLoop);
@@ -158,7 +168,7 @@
                 }, { passive: false });
 
                 document.addEventListener('mousedown', (event) => {
-                    if (event.target.closest('.github-container') || event.target.closest('.seed-container')) {
+                    if (event.target.closest('.github-container') || event.target.closest('.block-container')) {
                         return;
                     } else {
                         currentKeyPressed = true;
@@ -167,7 +177,7 @@
                 }, { passive: false });
 
                 document.addEventListener('touchstart', (event) => {
-                    if (event.target.closest('.github-container') || event.target.closest('.seed-container')) {
+                    if (event.target.closest('.github-container') || event.target.closest('.block-container')) {
                         return;
                     } else {
                         currentKeyPressed = true;
@@ -175,63 +185,117 @@
                     }
                 }, { passive: false });
 
-                console.log('WASM module loaded successfully, blockheight =', currentSeed);
+                console.log('WASM module loaded successfully, block header =', blockHash);
 
             } catch (error) {
                 console.error('Error loading WASM module:', error);
                 alert('Error loading WASM module, see console for details');
             }
-        }
+
+            async function newLevel() {
+                if (blockHeight < 0) {
+                    blockHeight = 0;
+                }
+                blockHeightInput.value = blockHeight;
 
 
+                const cachedHash = localStorage.getItem(`blockHash_${blockHeight}`);
+
+                if (cachedHash) {
+
+                    console.log('Using cached block hash for block height', blockHeight, 'hash:', cachedHash);
+                    blockHash = parseInt(cachedHash, 10);
+                    frameCount = 0;
+                    lastWorkingBlockHeight = blockHeight;
+                    return;
+                }
 
 
-        document.addEventListener('DOMContentLoaded', () => {
-            const maxSeedValue = 1000000;
+                try {
+                    const { bitcoin: { blocks } } = mempoolJS({
+                        hostname: 'mempool.space'
+                    });
 
-            function updateSeedAndReload(newSeed) {
-                newSeed = Math.max(0, Math.min(maxSeedValue, newSeed));
-                seedInput.value = newSeed;
-                currentSeed = newSeed;
-                frameCount = 0;
+                    const newHash = await blocks.getBlockHeight({ height: blockHeight });
+                    let hash = JSON.stringify(newHash, undefined, 2);
+                    hash = hash.replace(/^"|"$/g, '');
+
+                    const last7Chars = hash.slice(-7);
+
+                    const u32Value = parseInt(last7Chars, 16);
+
+                    blockHash = u32Value;
+                    console.log(blockHeight, blockHash);
+
+                    localStorage.setItem(`blockHash_${blockHeight}`, blockHash.toString());
+
+                    frameCount = 0;
+                    lastWorkingBlockHeight = blockHeight;
+
+                } catch (error) {
+                    alert(`bitcoin block ${blockHeight} does not exist yet`);
+                    blockHeight = lastWorkingBlockHeight;
+                    blockHeightInput.value = blockHeight;
+                    console.error("Failed to fetch block data:", error);
+                }
             }
 
-            document.getElementById('increment-seed').addEventListener('click', () => {
-                updateSeedAndReload(currentSeed + 1);
+            async function get_current_block() {
+                try {
+                    const { bitcoin: { blocks } } = mempoolJS({
+                        hostname: 'mempool.space'
+                    });
+
+                    const blocksTipHeight = await blocks.getBlocksTipHeight();
+                    let hash = JSON.stringify(blocksTipHeight, undefined, 2);
+                    blockHeight = blocksTipHeight;
+                    newLevel();
+                } catch (error) {
+                    console.error("Failed to fetch current block data:", error);
+                }
+            }
+
+
+            document.getElementById('increment-block').addEventListener('click', () => {
+                blockHeight += 1;
+                newLevel();
             });
 
-            document.getElementById('decrement-seed').addEventListener('click', () => {
-                updateSeedAndReload(currentSeed - 1);
+            document.getElementById('decrement-block').addEventListener('click', () => {
+                blockHeight -= 1;
+                newLevel();
             });
 
-            seedInput.addEventListener('change', () => {
-                updateSeedAndReload(parseInt(seedInput.value, 10) || 0);
+            blockHeightInput.addEventListener('change', () => {
+                blockHeight = parseInt(blockHeightInput.value, 10);
+                newLevel();
             });
 
-            seedInput.addEventListener('keydown', (event) => {
+            blockHeightInput.addEventListener('keydown', (event) => {
                 if (event.key === 'Enter') {
                     event.preventDefault();
-                    updateSeedAndReload(parseInt(seedInput.value, 10) || 0);
+                    blockHeight = parseInt(blockHeightInput.value, 10);
+                    newLevel();
                 }
             });
             document.addEventListener('keydown', (event) => {
                 if (event.key === 'ArrowLeft') {
-                    event.preventDefault();
-                    updateSeedAndReload(currentSeed - 1);
+                    blockHeight -= 1;
+                    newLevel();
                 }
             }, { passive: false });
             document.addEventListener('keydown', (event) => {
                 if (event.key === 'ArrowRight') {
                     event.preventDefault();
-                    updateSeedAndReload(currentSeed + 1);
+                    blockHeight += 1;
+                    newLevel();
                 }
             }, { passive: false });
 
 
-            loadWasm();
+        }
 
-        });
-
+        loadWasm();
 
     </script>
 </body>
