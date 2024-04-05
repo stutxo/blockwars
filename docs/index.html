@@ -112,7 +112,7 @@
     <script>
         //This is a base64 encoded WebAssembly binary, it is 33% bigger than the original .wasm binary, im just testing it out.
         // Base64WasmStart 
-        const base64Wasm = 'AGFzbQEAAAABBwFgA39/fwADAgEABQMBABQGGQN/AEHEgcAAC38AQcjxzwALfwBB0PHPAAsHOgUGbWVtb3J5AgAJYmxvY2t3YXJzAAAGQlVGRkVSAwAKX19kYXRhX2VuZAMBC19faGVhcF9iYXNlAwIK+gkB9wkCA38KfSABBEBBwIHAAEEBOgAACwJAIAJBAUYEQEHAfiECA0AgAgRAIAJBwIHAAGpBADYCACACQRBqIQIMAQVB/I9wIQIDQCACBEAgAkHI8c8AakEANgIAIAJBBGohAgwBCwtBACECQcCBwABBADoAACAAQQFzIgBBDXQgAHMiAEERdiAAcyIAQQV0IABzIgRBCnBBAmoiASEAIAQhAwNAIABFBEAgBEEEdCAEQQpuQaABbGtBoIDAAGohAgNAIAFBC0sNBiACQQA2AgAgAkEQaiECIAFBAWohAQwACwALIAJBwAFHBEAgAkGAgEBrQQE2AgAgAkGMgMAAakMAAABAQwAAQEAgAkEQRhtDAACAPyACGzgCACACQYSAwABqIANBDXQgA3MiA0ERdiADcyIDQQV0IANzIgNBGHBBCmyzOAIAIAJBiIDAAGogA0ENdCADcyIDQRF2IANzIgNBBXQgA3MiA0EYcEEKbLM4AgAgAEEBayEAIAJBEGohAgwBCwsDQAwACwALAAsAC0EAIQFBwIHAAC0AAEUNAEHAfiECA0AgAkUNAQJAIAJBwIHAAGooAgBBAUYEQCACQcyBwABqKgIAQwAAgD9bDQELIAJBEGohAiABQQFqIQEMAQsLQQAhAEHAfiECA0AgAkUNAQJAIAJBwIHAAGooAgBBAUYEQCACQcyBwABqKgIAQwAAAEBbDQELIAJBEGohAiAAQQFqIQAMAQsLIAFBBHQiA0GAgEBrIgEoAgBBAUcNACAAQQR0IgRBgIBAayICKAIAQQFHDQACQCAEQYSAwABqKgIAIgogA0GEgMAAaioCACIOkyILIAuUIARBiIDAAGoqAgAiDCADQYiAwABqKgIAIg+TIg0gDZSSIgdDAAAAAF8gB0MAAIA/W3INACAHQwAAAD+UQwAAgD+SIQkgByEGA0AgCSIIIAZdBEAgCCAHIAiVkkMAAAA/lCEJIAghBgwBCwsgBkMAACBBXw0AIAFBATYCACABIA8gDSAGlUMAACBBlJI4AgggASAOIAsgBpVDAAAgQZSSOAIEDAELIAFBATYCACABIAo4AgQgASAMOAIIIAFBgICAhAQ2AgwgAkEBNgIAIAIgCjgCBCACIAw4AgggAkGAgID8AzYCDCAAQQFqIgBBACAAQQxHG0EEdEGAgEBrIgAoAgAEQCAAQYCAgIAENgIMIABBATYCAAtBwIHAAEEAOgAAC0EEIQRBASECA0ACQCACQQFxBEAgBLMhCEEAIQEDQCABIgBBwAFGDQIgAEEQaiEBIABBgIBAaygCAEUNACAAQYyAwABqKgIAIAhcDQAgAEGIgMAAaioCACEHIABBhIDAAGoqAgAhCUEAIQMDQCADQf8BcSIAQQlLDQEgByAAs5IiBkMAAAAAYCEAQQAhAkF/An8gBkMAAIBPXSAGQwAAAABgcQRAIAapDAELQQALQQAgABsgBkP//39PXhtB/wFsIQADQCACQf8BcSIFQQlNBEAgCSAFs5IiBkMAAAAAYCEFIAJBAWohAkF/An8gBkMAAIBPXSAGQwAAAABgcQRAIAapDAELQQALQQAgBRsgBkP//39PXhsgAGoiBUGA/ANLDQEgBUECdEHEgcAAaiAENgIADAELCyADQQFqIQMMAAsACwALDwsgBEEARyECIARBAWsiAEEAIAAgBE0bIQQMAAsACw==';
+    const base64Wasm = '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';
         // Base64WasmEnd
         const canvas = document.getElementById('canvas');
 
@@ -128,16 +128,49 @@
         };
         const blockHeightInput = document.getElementById('block-input');
 
-        //genesis hardcoded
-        let blockHash = 177005167;
+
         let blockHeight = 0;
         let lastWorkingBlockHeight = 0;
-        let frameCount = 0;
-
+        //32 array of genesis hardcoded
+        let seedData = [
+            0,
+            0,
+            0,
+            0,
+            0,
+            25,
+            214,
+            104,
+            156,
+            8,
+            90,
+            225,
+            101,
+            131,
+            30,
+            147,
+            79,
+            247,
+            99,
+            174,
+            70,
+            162,
+            166,
+            193,
+            114,
+            179,
+            241,
+            182,
+            10,
+            140,
+            226,
+            111
+        ];
 
         async function loadWasm() {
             get_current_block();
             try {
+                //wasm management
                 const binaryString = window.atob(base64Wasm);
                 const bytes = new Uint8Array(binaryString.length);
                 for (let i = 0; i < binaryString.length; i++) {
@@ -147,41 +180,59 @@
                 cachedModule = await WebAssembly.compile(bytes);
                 const instance = await WebAssembly.instantiate(cachedModule);
                 const { exports: wasm } = instance;
-                const bufferPointer = wasm.BUFFER.value;
-                const imageData = new ImageData(canvasSize, canvasSize);
+
+                //memory management
+                const drawBufferPointer = wasm.DRAW.value;
+                const seedBufferPointer = wasm.SEED.value;
+                const inputBufferPointer = wasm.INPUT.value;
+                const restBufferPointer = wasm.RESET.value;
+
+                const inputBuffer = new Uint8Array(wasm.memory.buffer, inputBufferPointer, 1);
+                const resetBuffer = new Uint8Array(wasm.memory.buffer, restBufferPointer, 1);
+                const canvasBuffer = new Uint32Array(wasm.memory.buffer, drawBufferPointer, canvasSize * canvasSize);
+                const seedBuffer = new Uint32Array(wasm.memory.buffer, seedBufferPointer, 256);
+
+                //game functions
                 const targetFrameTime = 1000 / 60; // Target 60 FPS
                 let lastFrameTime = 0;
-                let currentKeyPressed = false;
-                let lastTime = performance.now();
-
-                function updateCanvas() {
-                    const buffer = new Uint32Array(wasm.memory.buffer, bufferPointer, canvasSize * canvasSize);
-                    for (let i = 0; i < buffer.length; i++) {
-                        const color = stateToColor[buffer[i]] || [0, 0, 0, 0];
-                        imageData.data.set(color, i * 4);
-                    }
-                    ctx.putImageData(imageData, 0, 0);
-                }
 
                 function gameLoop(currentTime) {
                     requestAnimationFrame(gameLoop);
                     const deltaTime = currentTime - lastFrameTime;
                     if (deltaTime < targetFrameTime) return;
                     lastFrameTime = currentTime - (deltaTime % targetFrameTime);
-
-                    let seed = wasm.blockwars(blockHash, currentKeyPressed, frameCount);
-
+                    wasm.blockwars();
                     updateCanvas();
-                    frameCount++;
-                    currentKeyPressed = false;
                 }
+
+                const imageData = new ImageData(canvasSize, canvasSize);
+                function updateCanvas() {
+                    for (let i = 0; i < canvasBuffer.length; i++) {
+                        const color = stateToColor[canvasBuffer[i]] || [0, 0, 0, 0];
+                        imageData.data.set(color, i * 4);
+                    }
+                    ctx.putImageData(imageData, 0, 0);
+                }
+
+                function input() {
+                    inputBuffer[0] = 1;
+                }
+
+                function reset() {
+                    resetBuffer[0] = 1;
+                    seedData.forEach((value, index) => {
+                        seedBuffer[index] = value;
+                    });
+                }
+
+                //start game loop
                 requestAnimationFrame(gameLoop);
 
                 const allowedKeys = new Set(['ArrowUp', 'ArrowDown', 'w', 'a', 's', 'd', ' ', 'MouseLeft', 'MouseRight', 'Touch']);
 
                 document.addEventListener('keydown', (event) => {
                     if (allowedKeys.has(event.key)) {
-                        currentKeyPressed = true;
+                        input();
                         event.preventDefault();
                         if (document.activeElement instanceof HTMLButtonElement) {
                             document.activeElement.blur();
@@ -191,14 +242,14 @@
 
                 document.addEventListener('mousedown', (event) => {
                     if (event.target.closest('canvas')) {
-                        currentKeyPressed = true;
+                        input();
                         event.preventDefault();
                     }
                 }, { passive: false });
 
                 document.addEventListener('touchstart', (event) => {
                     if (event.target.closest('canvas')) {
-                        currentKeyPressed = true;
+                        input();
                         event.preventDefault();
                     }
                 }, { passive: false });
@@ -220,11 +271,11 @@
                 const cachedHash = localStorage.getItem(`blockHash_${blockHeight}`);
 
                 if (cachedHash) {
-
-                    console.log('Using cached block hash for block height', blockHeight);
+                    seedData = hexStringToByteArray(cachedHash);
+                    console.log(`level generated by cached block hash ${cachedHash} for block height ${blockHeight}`);
                     blockHash = parseInt(cachedHash, 10);
-                    frameCount = 0;
                     lastWorkingBlockHeight = blockHeight;
+                    reset();
                     return;
                 }
 
@@ -236,22 +287,18 @@
 
                     const newHash = await blocks.getBlockHeight({ height: blockHeight });
                     let hash = JSON.stringify(newHash, undefined, 2);
-                    hash = hash.replace(/^"|"$/g, '');
+                    hashString = hash.replace(/^"|"$/g, '');
 
-                    const last7Chars = hash.slice(-7);
+                    seedData = hexStringToByteArray(hashString);
 
-                    const u32Value = parseInt(last7Chars, 16);
+                    console.log(`level generated by block hash ${hashString} for block height ${blockHeight}`);
 
-                    blockHash = u32Value;
-                    console.log(blockHeight, hash);
-
-                    localStorage.setItem(`blockHash_${blockHeight}`, blockHash.toString());
-
-                    frameCount = 0;
+                    localStorage.setItem(`blockHash_${blockHeight}`, hashString.toString());
+                    reset();
                     lastWorkingBlockHeight = blockHeight;
 
                 } catch (error) {
-                    alert(`bitcoin block ${blockHeight} does not exist yet`);
+                    alert(`bitcoin block ${blockHeight} does not exist yet or network error`);
                     blockHeight = lastWorkingBlockHeight;
                     blockHeightInput.value = blockHeight;
                     console.error("Failed to fetch block data:", error);
@@ -315,6 +362,17 @@
             }, { passive: false });
 
 
+            function hexStringToByteArray(hexString) {
+                if (hexString.length % 2 !== 0) {
+                    throw "The hex string must have an even number of characters.";
+                }
+
+                var byteArray = [];
+                for (var i = 0; i < hexString.length; i += 2) {
+                    byteArray.push(parseInt(hexString.slice(i, i + 2), 16));
+                }
+                return byteArray;
+            }
         }
 
         loadWasm();

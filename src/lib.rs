@@ -14,12 +14,11 @@ const TELEPORT_SPEED: f32 = 10.;
 const GRID_WIDTH: usize = (WIDTH as usize) / TELEPORT_SIZE as usize;
 const GRID_HEIGHT: usize = (HEIGHT as usize) / TELEPORT_SIZE as usize;
 
-static mut PLAYER_MOVE: bool = false;
-
 //https://blog.orhun.dev/zero-deps-random-in-rust/
 #[inline]
-fn rng(seed: u32, frame: u32) -> impl Iterator<Item = u32> {
-    let mut random = seed ^ frame;
+fn rng(seed: [u32; 256]) -> impl Iterator<Item = u32> {
+    let seed_slice = &seed[..];
+    let mut random = seed_slice.iter().fold(0, |acc, &x| acc ^ x);
     repeat_with(move || {
         random ^= random << 13;
         random ^= random >> 17;
@@ -27,51 +26,46 @@ fn rng(seed: u32, frame: u32) -> impl Iterator<Item = u32> {
         random
     })
 }
+#[no_mangle]
+static mut INPUT: [u8; 1] = [0; 1];
 
 #[no_mangle]
-static mut BUFFER: [u32; 255 * 255] = [0; 255 * 255];
+static mut RESET: [u8; 1] = [0; 1];
+
+#[no_mangle]
+static mut DRAW: [u32; 255 * 255] = [0; 255 * 255];
+
+#[no_mangle]
+static mut SEED: [u32; 256] = [0; 256];
 
 #[inline]
 #[no_mangle]
-unsafe extern "C" fn blockwars(seed: u32, key_pressed: bool, frame: u32) {
-    if key_pressed {
-        PLAYER_MOVE = true;
-    }
-
-    if frame == 1 {
-        TELEPORT.iter_mut().for_each(|t| *t = None);
-        BUFFER.iter_mut().for_each(|b| *b = 0);
-        PLAYER_MOVE = false;
+unsafe extern "C" fn blockwars() {
+    if RESET[0] == 1 {
+        RESET[0] = 0;
+        INPUT[0] = 0;
+        let mut rng = rng(SEED);
+        spawn_tele(&mut *ptr::addr_of_mut!(TELEPORT), &mut rng);
+        DRAW.iter_mut().for_each(|b| *b = 0);
     }
 
     frame_safe(
-        &mut *ptr::addr_of_mut!(BUFFER),
-        frame,
-        seed,
+        &mut *ptr::addr_of_mut!(DRAW),
         &mut *ptr::addr_of_mut!(TELEPORT),
-        &mut *ptr::addr_of_mut!(PLAYER_MOVE),
+        &mut *ptr::addr_of_mut!(INPUT),
     );
 }
 
 //no unsafe code below this point
 #[inline]
 fn frame_safe(
-    buffer: &mut [u32; 255 * 255],
-    frame: u32,
-    seed: u32,
+    draw: &mut [u32; 255 * 255],
     teleporters: &mut [Option<(f32, f32, f32)>; MAX_TELEPORT],
-    key_state: &mut bool,
+    input: &mut [u8; 1],
 ) {
-    let mut rng = rng(seed, frame);
+    update_tele_pos(teleporters, input);
 
-    if frame == 1 {
-        spawn_tele(teleporters, &mut rng);
-    }
-
-    if *key_state {
-        update_tele_pos(teleporters, key_state);
-    }
-    render_frame(buffer, teleporters);
+    render_frame(draw, teleporters);
 }
 
 #[inline]
@@ -126,11 +120,8 @@ fn spawn_tele(
 }
 
 #[inline]
-fn update_tele_pos(
-    teleporters: &mut [Option<(f32, f32, f32)>; MAX_TELEPORT],
-    key_state: &mut bool,
-) {
-    if *key_state {
+fn update_tele_pos(teleporters: &mut [Option<(f32, f32, f32)>; MAX_TELEPORT], input: &mut [u8; 1]) {
+    if input[0] == 1 {
         if let Some((current, target)) = find_teleporter_targets(teleporters) {
             if let (Some(current_pos), Some(target_pos)) =
                 (teleporters[current], teleporters[target])
@@ -149,7 +140,7 @@ fn update_tele_pos(
                         teleporters[next_index] = Some((next_teleporter.0, next_teleporter.1, 2.0));
                     }
 
-                    *key_state = false;
+                    input[0] = 0;
                 } else {
                     let dir_x = dx / distance;
                     let dir_y = dy / distance;
@@ -208,7 +199,7 @@ fn find_teleporter_targets(
 
 #[inline]
 fn render_frame(
-    buffer: &mut [u32; 255 * 255],
+    draw: &mut [u32; 255 * 255],
     teleporters: &mut [Option<(f32, f32, f32)>; MAX_TELEPORT],
 ) {
     let mut draw_rect = |x: f32, y: f32, width: u8, height: u8, state: u32| {
@@ -216,8 +207,8 @@ fn render_frame(
             for dx in 0..width {
                 let index =
                     (y + f32::from(dy)) as usize * WIDTH as usize + (x + f32::from(dx)) as usize;
-                if index < buffer.len() {
-                    buffer[index] = state;
+                if index < draw.len() {
+                    draw[index] = state;
                 }
             }
         }
