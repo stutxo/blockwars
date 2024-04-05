@@ -47,13 +47,13 @@ unsafe extern "C" fn blockwars() {
         let mut rng = rng(SEED);
         spawn_tele(&mut *ptr::addr_of_mut!(TELEPORT), &mut rng);
         DRAW.iter_mut().for_each(|b| *b = 0);
+    } else {
+        frame_safe(
+            &mut *ptr::addr_of_mut!(DRAW),
+            &mut *ptr::addr_of_mut!(TELEPORT),
+            &mut *ptr::addr_of_mut!(INPUT),
+        );
     }
-
-    frame_safe(
-        &mut *ptr::addr_of_mut!(DRAW),
-        &mut *ptr::addr_of_mut!(TELEPORT),
-        &mut *ptr::addr_of_mut!(INPUT),
-    );
 }
 
 //no unsafe code below this point
@@ -64,7 +64,6 @@ fn frame_safe(
     input: &mut [u8; 1],
 ) {
     update_tele_pos(teleporters, input);
-
     render_frame(draw, teleporters);
 }
 
