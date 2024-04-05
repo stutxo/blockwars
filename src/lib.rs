@@ -18,7 +18,7 @@ const GRID_HEIGHT: usize = (HEIGHT as usize) / TELEPORT_SIZE as usize;
 #[inline]
 fn rng(seed: [u32; 256]) -> impl Iterator<Item = u32> {
     let seed_slice = &seed[..];
-    let mut random = seed_slice.iter().fold(0, |acc, &x| acc ^ x);
+    let mut random = seed_init(&seed_slice);
     repeat_with(move || {
         random ^= random << 13;
         random ^= random >> 17;
@@ -26,6 +26,12 @@ fn rng(seed: [u32; 256]) -> impl Iterator<Item = u32> {
         random
     })
 }
+fn seed_init(seed: &[u32]) -> u32 {
+    seed.iter().enumerate().fold(0u32, |acc, (i, &x)| {
+        acc.wrapping_add(x.rotate_left(i as u32 % 32)) ^ 0x9E3779B9
+    })
+}
+
 #[no_mangle]
 static mut INPUT: [u8; 1] = [0; 1];
 
@@ -76,12 +82,7 @@ fn spawn_tele(
     let max_index_x = GRID_WIDTH - 1;
     let max_index_y = GRID_HEIGHT - 1;
 
-    let num_teleporters = match rng.next() {
-        Some(random_value) => {
-            ((random_value % (MAX_TELEPORT as u32 - 2)) as usize + 2).min(teleporters.len())
-        }
-        None => 2,
-    };
+    let num_teleporters = 4 + rng.next().unwrap_or(0) as usize % (MAX_TELEPORT - 4);
 
     for i in 0..num_teleporters {
         let x = match rng.next() {
