@@ -41,6 +41,20 @@
         }
 
 
+
+        #replay {
+            touch-action: manipulation;
+            background-color: transparent;
+            border: none;
+            cursor: pointer;
+            font-size: 2rem;
+            user-select: none;
+            display: flex;
+            align-items: center;
+            top: 0;
+        }
+
+
         #block-control {
             display: flex;
             align-items: center;
@@ -82,15 +96,18 @@
             <input type="number" id="block-input" value="0" inputmode="numeric" />
             <button id="increment-block">▶</button>
         </div>
+        <div style="display: flex; justify-content: center;">
+            <button id="replay">🔁</button>
+        </div>
         <br />
         <canvas id="canvas"></canvas>
         <br />
         <div class="github-container">
-            <a href="https://github.com/stutxo/blockwars" id="github-link"
-                style="text-decoration: underline; color: blue;">🐱 GitHub</a>
+            <a class="github-button" href="https://github.com/stutxo/blockwars" data-show-count="true"
+                aria-label="Star stutxo/blockwars on GitHub"></a>
         </div>
     </div>
-
+    <script async defer src="https://buttons.github.io/buttons.js"></script>
     <script src="https://mempool.space/mempool.js"></script>
     <script>
         //This is a base64 encoded WebAssembly binary, it is 33% bigger than the original .wasm binary, im just testing it out.
@@ -257,6 +274,9 @@
                 }
             }
 
+            document.getElementById('replay').addEventListener('click', () => {
+                newLevel();
+            });
 
             document.getElementById('increment-block').addEventListener('click', () => {
                 blockHeight += 1;
