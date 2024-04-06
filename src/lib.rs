@@ -1,5 +1,5 @@
 #![no_std]
-use core::{iter::repeat_with, ptr};
+use core::ptr;
 
 const WIDTH: u8 = 255;
 const HEIGHT: u8 = 255;
@@ -7,30 +7,12 @@ const HEIGHT: u8 = 255;
 const TELEPORT_NONE: core::option::Option<(f32, f32, f32)> = None;
 static mut TELEPORT: [Option<(f32, f32, f32)>; MAX_TELEPORT] = [TELEPORT_NONE; MAX_TELEPORT];
 
-const MAX_TELEPORT: usize = 12;
-const TELEPORT_SIZE: u8 = 10;
-const TELEPORT_SPEED: f32 = 10.;
+const MAX_TELEPORT: usize = 10;
+const TELEPORT_SIZE: u8 = 5;
+const TELEPORT_SPEED: f32 = 20.;
 
 const GRID_WIDTH: usize = (WIDTH as usize) / TELEPORT_SIZE as usize;
 const GRID_HEIGHT: usize = (HEIGHT as usize) / TELEPORT_SIZE as usize;
-
-//https://blog.orhun.dev/zero-deps-random-in-rust/
-#[inline]
-fn rng(seed: [u32; 256]) -> impl Iterator<Item = u32> {
-    let seed_slice = &seed[..];
-    let mut random = seed_init(&seed_slice);
-    repeat_with(move || {
-        random ^= random << 13;
-        random ^= random >> 17;
-        random ^= random << 5;
-        random
-    })
-}
-fn seed_init(seed: &[u32]) -> u32 {
-    seed.iter().enumerate().fold(0u32, |acc, (i, &x)| {
-        acc.wrapping_add(x.rotate_left(i as u32 % 32)) ^ 0x9E3779B9
-    })
-}
 
 #[no_mangle]
 static mut INPUT: [u8; 1] = [0; 1];
@@ -42,7 +24,7 @@ static mut RESET: [u8; 1] = [0; 1];
 static mut DRAW: [u32; 255 * 255] = [0; 255 * 255];
 
 #[no_mangle]
-static mut SEED: [u32; 256] = [0; 256];
+static mut SEED: [u32; 32] = [0; 32];
 
 #[inline]
 #[no_mangle]
@@ -50,8 +32,7 @@ unsafe extern "C" fn blockwars() {
     if RESET[0] == 1 {
         RESET[0] = 0;
         INPUT[0] = 0;
-        let mut rng = rng(SEED);
-        spawn_tele(&mut *ptr::addr_of_mut!(TELEPORT), &mut rng);
+        spawn_tele(&mut *ptr::addr_of_mut!(TELEPORT), SEED);
         DRAW.iter_mut().for_each(|b| *b = 0);
     } else {
         frame_safe(
@@ -74,38 +55,29 @@ fn frame_safe(
 }
 
 #[inline]
-fn spawn_tele(
-    teleporters: &mut [Option<(f32, f32, f32)>; MAX_TELEPORT],
-    rng: &mut impl Iterator<Item = u32>,
-) {
+fn spawn_tele(teleporters: &mut [Option<(f32, f32, f32)>; MAX_TELEPORT], rng: [u32; 32]) {
     let teleporter_size = TELEPORT_SIZE as usize;
     let max_index_x = GRID_WIDTH - 1;
     let max_index_y = GRID_HEIGHT - 1;
 
-    let num_teleporters = 4 + rng.next().unwrap_or(0) as usize % (MAX_TELEPORT - 4);
+    let raw_random_value = rng[30] ^ rng[31];
+    let scaled_random_value = (raw_random_value % 7) + 3;
+
+    let num_teleporters = scaled_random_value as usize;
 
     for i in 0..num_teleporters {
-        let x = match rng.next() {
-            Some(random_value) => {
-                let mut x = (random_value as usize % max_index_x) * teleporter_size;
-                x = x.min((WIDTH as usize) - teleporter_size);
-                x as f32
-            }
-            None => 0.0,
-        };
+        let random_value_x = rng[i] ^ rng[31 - i];
 
-        let y = match rng.next() {
-            Some(random_value) => {
-                let mut y = (random_value as usize % max_index_y) * teleporter_size;
-                y = y.min((HEIGHT as usize) - teleporter_size);
-                y as f32
-            }
-            None => 0.0,
-        };
+        let mut x = (random_value_x as usize % max_index_x) * teleporter_size;
+        x = x.min((WIDTH as usize) - teleporter_size);
+
+        let random_value_y = rng[i] ^ rng[30 - i];
+        let mut y = (random_value_y as usize % max_index_y) * teleporter_size;
+        y = y.min((HEIGHT as usize) - teleporter_size);
 
         teleporters[i] = Some((
-            x,
-            y,
+            x as f32,
+            y as f32,
             match i {
                 0 => 1.0,
                 1 => 2.0,
