@@ -15,8 +15,6 @@ const MAX_ENEMY: usize = 15;
 const ENEMY_HEIGHT: u8 = 5;
 const ENEMY_WIDTH: u8 = 10;
 
-const ENEMY_SPEED: f32 = 20.;
-
 static mut ENEMY: [(f32, f32, f32, f32); MAX_ENEMY] = [(0., 0., 0., 0.); MAX_ENEMY];
 
 #[no_mangle]
@@ -37,6 +35,7 @@ unsafe extern "C" fn blockwars() {
     if RESET[0] == 1 {
         RESET[0] = 0;
         INPUT[0] = 0;
+        DRAW.iter_mut().for_each(|b| *b = 0);
         spawn_tele(&mut *ptr::addr_of_mut!(TELEPORT), SEED);
         spawn_enemy(&mut *ptr::addr_of_mut!(ENEMY), SEED);
     } else if RESET[0] == 0 {
@@ -46,6 +45,7 @@ unsafe extern "C" fn blockwars() {
             &mut *ptr::addr_of_mut!(TELEPORT),
             &mut *ptr::addr_of_mut!(INPUT),
             &mut *ptr::addr_of_mut!(ENEMY),
+            &mut *ptr::addr_of_mut!(RESET),
         );
     }
 }
@@ -57,13 +57,22 @@ fn frame_safe(
     teleporters: &mut [Option<(f32, f32, f32)>; MAX_TELEPORT],
     input: &mut [u8; 1],
     enemies: &mut [(f32, f32, f32, f32); MAX_ENEMY],
+    reset: &mut [u8; 1],
 ) {
+    let gg = teleporters
+        .iter()
+        .rev()
+        .find_map(|t| t.as_ref())
+        .map_or(false, |teleporter| teleporter.2 == 1.0);
+
     if input[0] == 1 {
         move_player(teleporters, input);
-        check_collision(teleporters, enemies);
+        if !gg {
+            check_collision(teleporters, enemies, reset);
+        }
     }
     move_enemy(enemies);
-    render_frame(draw, teleporters, enemies);
+    render_frame(draw, teleporters, enemies, gg);
 }
 
 #[inline]
@@ -231,6 +240,7 @@ fn find_teleporter_targets(
 fn check_collision(
     teleporters: &mut [Option<(f32, f32, f32)>; MAX_TELEPORT],
     enemies: &mut [(f32, f32, f32, f32); MAX_ENEMY],
+    reset: &mut [u8; 1],
 ) {
     // Iterate over teleporters and enemies to check for collisions
     for teleporter in teleporters.iter_mut() {
@@ -261,9 +271,7 @@ fn check_collision(
                     if horizontal_distance < combined_half_width
                         && vertical_distance < combined_half_height
                     {
-                        unsafe {
-                            RESET[0] = 2;
-                        }
+                        reset[0] = 2;
                     }
                 }
             }
@@ -276,6 +284,7 @@ fn render_frame(
     draw: &mut [u32; 255 * 255],
     teleporters: &mut [Option<(f32, f32, f32)>; MAX_TELEPORT],
     enemies: &mut [(f32, f32, f32, f32); MAX_ENEMY],
+    gg: bool,
 ) {
     let mut draw_rect = |x: f32, y: f32, width: u8, height: u8, state: u32| {
         for dy in 0..height {
@@ -301,7 +310,11 @@ fn render_frame(
         for enemy in enemies.iter() {
             let (x, y, enemy_state, _) = enemy;
             if *enemy_state == state as f32 {
-                draw_rect(*x, *y, ENEMY_WIDTH, ENEMY_HEIGHT, 5);
+                if gg {
+                    draw_rect(*x, *y, ENEMY_WIDTH, ENEMY_HEIGHT, 3);
+                } else {
+                    draw_rect(*x, *y, ENEMY_WIDTH, ENEMY_HEIGHT, 5);
+                }
             }
         }
     }
