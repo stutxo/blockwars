@@ -311,7 +311,7 @@ fn render_frame(
             let (x, y, enemy_state, _) = enemy;
             if *enemy_state == state as f32 {
                 if gg {
-                    draw_rect(*x, *y, ENEMY_WIDTH, ENEMY_HEIGHT, 3);
+                    draw_rect(*x, *y, ENEMY_WIDTH, ENEMY_HEIGHT, 1);
                 } else {
                     draw_rect(*x, *y, ENEMY_WIDTH, ENEMY_HEIGHT, 5);
                 }
