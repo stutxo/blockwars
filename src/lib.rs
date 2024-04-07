@@ -4,15 +4,20 @@ use core::ptr;
 const WIDTH: u8 = 255;
 const HEIGHT: u8 = 255;
 
+const MAX_TELEPORT: usize = 10;
+const TELEPORT_SIZE: u8 = 5;
+const TELEPORT_SPEED: f32 = 15.;
+
 const TELEPORT_NONE: core::option::Option<(f32, f32, f32)> = None;
 static mut TELEPORT: [Option<(f32, f32, f32)>; MAX_TELEPORT] = [TELEPORT_NONE; MAX_TELEPORT];
 
-const MAX_TELEPORT: usize = 10;
-const TELEPORT_SIZE: u8 = 5;
-const TELEPORT_SPEED: f32 = 20.;
+const MAX_ENEMY: usize = 20;
+const ENEMY_HEIGHT: u8 = 5;
+const ENEMY_WIDTH: u8 = 5;
 
-const GRID_WIDTH: usize = (WIDTH as usize) / TELEPORT_SIZE as usize;
-const GRID_HEIGHT: usize = (HEIGHT as usize) / TELEPORT_SIZE as usize;
+const ENEMY_SPEED: f32 = 20.;
+
+static mut ENEMY: [(f32, f32, f32, f32); MAX_ENEMY] = [(0., 0., 0., 0.); MAX_ENEMY];
 
 #[no_mangle]
 static mut INPUT: [u8; 1] = [0; 1];
@@ -29,16 +34,18 @@ static mut SEED: [u32; 32] = [0; 32];
 #[inline]
 #[no_mangle]
 unsafe extern "C" fn blockwars() {
+    DRAW.iter_mut().for_each(|b| *b = 0);
     if RESET[0] == 1 {
         RESET[0] = 0;
         INPUT[0] = 0;
         spawn_tele(&mut *ptr::addr_of_mut!(TELEPORT), SEED);
-        DRAW.iter_mut().for_each(|b| *b = 0);
+        spawn_enemy(&mut *ptr::addr_of_mut!(ENEMY), SEED);
     } else {
         frame_safe(
             &mut *ptr::addr_of_mut!(DRAW),
             &mut *ptr::addr_of_mut!(TELEPORT),
             &mut *ptr::addr_of_mut!(INPUT),
+            &mut *ptr::addr_of_mut!(ENEMY),
         );
     }
 }
@@ -49,16 +56,20 @@ fn frame_safe(
     draw: &mut [u32; 255 * 255],
     teleporters: &mut [Option<(f32, f32, f32)>; MAX_TELEPORT],
     input: &mut [u8; 1],
+    enemies: &mut [(f32, f32, f32, f32); MAX_ENEMY],
 ) {
-    update_tele_pos(teleporters, input);
-    render_frame(draw, teleporters);
+    if input[0] == 1 {
+        move_player(teleporters, input);
+        check_collision(teleporters, enemies);
+    }
+    move_enemy(enemies);
+    render_frame(draw, teleporters, enemies);
 }
 
 #[inline]
 fn spawn_tele(teleporters: &mut [Option<(f32, f32, f32)>; MAX_TELEPORT], rng: [u32; 32]) {
-    let teleporter_size = TELEPORT_SIZE as usize;
-    let max_index_x = GRID_WIDTH - 1;
-    let max_index_y = GRID_HEIGHT - 1;
+    let max_index_x = WIDTH as usize - ENEMY_WIDTH as usize;
+    let max_index_y = HEIGHT as usize - ENEMY_HEIGHT as usize;
 
     let raw_random_value = rng[30] ^ rng[31];
     let scaled_random_value = (raw_random_value % 7) + 3;
@@ -66,14 +77,12 @@ fn spawn_tele(teleporters: &mut [Option<(f32, f32, f32)>; MAX_TELEPORT], rng: [u
     let num_teleporters = scaled_random_value as usize;
 
     for i in 0..num_teleporters {
-        let random_value_x = rng[i] ^ rng[31 - i];
+        let random_value_x = rng[i] ^ rng[(31 - i) % rng.len()];
 
-        let mut x = (random_value_x as usize % max_index_x) * teleporter_size;
-        x = x.min((WIDTH as usize) - teleporter_size);
+        let x = random_value_x % max_index_x as u32;
 
-        let random_value_y = rng[i] ^ rng[30 - i];
-        let mut y = (random_value_y as usize % max_index_y) * teleporter_size;
-        y = y.min((HEIGHT as usize) - teleporter_size);
+        let random_value_y = rng[i] ^ rng[(30 - i) % rng.len()];
+        let y = random_value_y % max_index_y as u32;
 
         teleporters[i] = Some((
             x as f32,
@@ -92,7 +101,57 @@ fn spawn_tele(teleporters: &mut [Option<(f32, f32, f32)>; MAX_TELEPORT], rng: [u
 }
 
 #[inline]
-fn update_tele_pos(teleporters: &mut [Option<(f32, f32, f32)>; MAX_TELEPORT], input: &mut [u8; 1]) {
+fn spawn_enemy(enemies: &mut [(f32, f32, f32, f32); MAX_ENEMY], rng: [u32; 32]) {
+    let max_index_x = WIDTH as usize - ENEMY_WIDTH as usize;
+    let max_index_y = HEIGHT as usize - ENEMY_HEIGHT as usize;
+
+    for i in 0..MAX_ENEMY {
+        let random_value_x = rng[i] ^ rng[(31 - i) % rng.len()];
+
+        let x = random_value_x % max_index_x as u32 + 20;
+
+        let random_value_y = rng[i] ^ rng[(30 - i) % rng.len()];
+
+        let y = random_value_y % max_index_y as u32 + 20;
+
+        let raw_random_value = rng[i] ^ rng[31];
+        let scaled_random_value = (raw_random_value % 5) + 1;
+
+        enemies[i] = (x as f32, y as f32, scaled_random_value as f32, 0.);
+    }
+}
+
+#[inline]
+fn move_enemy(enemies: &mut [(f32, f32, f32, f32); MAX_ENEMY]) {
+    for enemy in enemies.iter_mut() {
+        let (x, y, state, count) = enemy;
+        let movement_count = 30.0; // Number of steps to move in one direction
+
+        if *count >= movement_count {
+            *state = match *state {
+                1.0 => 2.0, // After moving right, move up
+                2.0 => 3.0, // After moving up, move left
+                3.0 => 4.0, // After moving left, move down
+                4.0 => 1.0, // After moving down, move right again
+                _ => 1.0,   // Default to moving right if state is unknown
+            };
+            *count = 1.0; // Reset count after changing direction
+        } else {
+            *count += 1.0; // Increment count for each step in the current direction
+        }
+
+        match *state {
+            1.0 => *x += 1.0, // Move right
+            2.0 => *y -= 1.0, // Move up (assuming y decreases as you go up)
+            3.0 => *x -= 1.0, // Move left
+            4.0 => *y += 1.0, // Move down
+            _ => (),
+        }
+    }
+}
+
+#[inline]
+fn move_player(teleporters: &mut [Option<(f32, f32, f32)>; MAX_TELEPORT], input: &mut [u8; 1]) {
     if input[0] == 1 {
         if let Some((current, target)) = find_teleporter_targets(teleporters) {
             if let (Some(current_pos), Some(target_pos)) =
@@ -169,10 +228,52 @@ fn find_teleporter_targets(
     Some((current_index, next_target_index))
 }
 
+fn check_collision(
+    teleporters: &mut [Option<(f32, f32, f32)>; MAX_TELEPORT],
+    enemies: &mut [(f32, f32, f32, f32); MAX_ENEMY],
+) {
+    // Iterate over teleporters and enemies to check for collisions
+    for teleporter in teleporters.iter_mut() {
+        if let Some((tele_x, tele_y, tele_state)) = teleporter {
+            if *tele_state == 1.0 {
+                // Check if the teleporter is in the specified state
+                for enemy in enemies.iter_mut() {
+                    let (mut enemy_x, mut enemy_y, _, _) = *enemy;
+
+                    // Determine the horizontal and vertical distances between the teleporter and enemy centers
+                    let horizontal_distance = if tele_x > &mut enemy_x {
+                        *tele_x - enemy_x
+                    } else {
+                        enemy_x - *tele_x
+                    };
+                    let vertical_distance = if tele_y > &mut enemy_y {
+                        *tele_y - enemy_y
+                    } else {
+                        enemy_y - *tele_y
+                    };
+
+                    // Determine the combined half-widths and half-heights
+                    let combined_half_width = TELEPORT_SIZE as f32 / 2.0 + ENEMY_WIDTH as f32 / 2.0;
+                    let combined_half_height =
+                        TELEPORT_SIZE as f32 / 2.0 + ENEMY_HEIGHT as f32 / 2.0;
+
+                    // Check if the teleporter and enemy overlap
+                    if horizontal_distance < combined_half_width
+                        && vertical_distance < combined_half_height
+                    {
+                        *tele_state = 0.0;
+                    }
+                }
+            }
+        }
+    }
+}
+
 #[inline]
 fn render_frame(
     draw: &mut [u32; 255 * 255],
     teleporters: &mut [Option<(f32, f32, f32)>; MAX_TELEPORT],
+    enemies: &mut [(f32, f32, f32, f32); MAX_ENEMY],
 ) {
     let mut draw_rect = |x: f32, y: f32, width: u8, height: u8, state: u32| {
         for dy in 0..height {
@@ -180,6 +281,7 @@ fn render_frame(
                 let index =
                     (y + f32::from(dy)) as usize * WIDTH as usize + (x + f32::from(dx)) as usize;
                 if index < draw.len() {
+                    draw[index] = 0;
                     draw[index] = state;
                 }
             }
@@ -192,6 +294,12 @@ fn render_frame(
                 if *tele_state == state as f32 {
                     draw_rect(*x, *y, TELEPORT_SIZE, TELEPORT_SIZE, state);
                 }
+            }
+        }
+        for enemy in enemies.iter() {
+            let (x, y, enemy_state, _) = enemy;
+            if *enemy_state == state as f32 {
+                draw_rect(*x, *y, ENEMY_WIDTH, ENEMY_HEIGHT, 5);
             }
         }
     }
