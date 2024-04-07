@@ -11,9 +11,9 @@ const TELEPORT_SPEED: f32 = 15.;
 const TELEPORT_NONE: core::option::Option<(f32, f32, f32)> = None;
 static mut TELEPORT: [Option<(f32, f32, f32)>; MAX_TELEPORT] = [TELEPORT_NONE; MAX_TELEPORT];
 
-const MAX_ENEMY: usize = 20;
+const MAX_ENEMY: usize = 15;
 const ENEMY_HEIGHT: u8 = 5;
-const ENEMY_WIDTH: u8 = 5;
+const ENEMY_WIDTH: u8 = 10;
 
 const ENEMY_SPEED: f32 = 20.;
 
