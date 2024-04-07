@@ -34,13 +34,13 @@ static mut SEED: [u32; 32] = [0; 32];
 #[inline]
 #[no_mangle]
 unsafe extern "C" fn blockwars() {
-    DRAW.iter_mut().for_each(|b| *b = 0);
     if RESET[0] == 1 {
         RESET[0] = 0;
         INPUT[0] = 0;
         spawn_tele(&mut *ptr::addr_of_mut!(TELEPORT), SEED);
         spawn_enemy(&mut *ptr::addr_of_mut!(ENEMY), SEED);
-    } else {
+    } else if RESET[0] == 0 {
+        DRAW.iter_mut().for_each(|b| *b = 0);
         frame_safe(
             &mut *ptr::addr_of_mut!(DRAW),
             &mut *ptr::addr_of_mut!(TELEPORT),
@@ -115,7 +115,7 @@ fn spawn_enemy(enemies: &mut [(f32, f32, f32, f32); MAX_ENEMY], rng: [u32; 32]) 
         let y = random_value_y % max_index_y as u32 + 20;
 
         let raw_random_value = rng[i] ^ rng[31];
-        let scaled_random_value = (raw_random_value % 5) + 1;
+        let scaled_random_value = raw_random_value % 4 + 1;
 
         enemies[i] = (x as f32, y as f32, scaled_random_value as f32, 10.);
     }
@@ -261,7 +261,9 @@ fn check_collision(
                     if horizontal_distance < combined_half_width
                         && vertical_distance < combined_half_height
                     {
-                        *tele_state = 0.0;
+                        unsafe {
+                            RESET[0] = 2;
+                        }
                     }
                 }
             }
