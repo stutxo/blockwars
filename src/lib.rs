@@ -6,7 +6,7 @@ const HEIGHT: u8 = 255;
 
 const MAX_TELEPORT: usize = 10;
 const TELEPORT_SIZE: u8 = 5;
-const TELEPORT_SPEED: f32 = 15.;
+const TELEPORT_SPEED: f32 = 10.;
 
 const TELEPORT_NONE: core::option::Option<(f32, f32, f32)> = None;
 static mut TELEPORT: [Option<(f32, f32, f32)>; MAX_TELEPORT] = [TELEPORT_NONE; MAX_TELEPORT];
@@ -117,7 +117,7 @@ fn spawn_enemy(enemies: &mut [(f32, f32, f32, f32); MAX_ENEMY], rng: [u32; 32]) 
         let raw_random_value = rng[i] ^ rng[31];
         let scaled_random_value = (raw_random_value % 5) + 1;
 
-        enemies[i] = (x as f32, y as f32, scaled_random_value as f32, 0.);
+        enemies[i] = (x as f32, y as f32, scaled_random_value as f32, 10.);
     }
 }
 
@@ -125,7 +125,7 @@ fn spawn_enemy(enemies: &mut [(f32, f32, f32, f32); MAX_ENEMY], rng: [u32; 32]) 
 fn move_enemy(enemies: &mut [(f32, f32, f32, f32); MAX_ENEMY]) {
     for enemy in enemies.iter_mut() {
         let (x, y, state, count) = enemy;
-        let movement_count = 30.0; // Number of steps to move in one direction
+        let movement_count = 50.0; // Number of steps to move in one direction
 
         if *count >= movement_count {
             *state = match *state {
