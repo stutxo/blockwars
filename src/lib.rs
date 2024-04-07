@@ -4,8 +4,8 @@ use core::ptr;
 const WIDTH: u8 = 255;
 const HEIGHT: u8 = 255;
 
-const MAX_TELEPORT: usize = 10;
-const TELEPORT_SIZE: u8 = 5;
+const MAX_TELEPORT: usize = 5;
+const TELEPORT_SIZE: u8 = 10;
 const TELEPORT_SPEED: f32 = 10.;
 
 const TELEPORT_NONE: core::option::Option<(f32, f32, f32)> = None;
@@ -66,10 +66,7 @@ fn frame_safe(
         .map_or(false, |teleporter| teleporter.2 == 1.0);
 
     if input[0] == 1 {
-        move_player(teleporters, input);
-        if !gg {
-            check_collision(teleporters, enemies, reset);
-        }
+        move_player(teleporters, input, reset, enemies);
     }
     move_enemy(enemies);
     render_frame(draw, teleporters, enemies, gg);
@@ -80,10 +77,7 @@ fn spawn_tele(teleporters: &mut [Option<(f32, f32, f32)>; MAX_TELEPORT], rng: [u
     let max_index_x = WIDTH as usize - ENEMY_WIDTH as usize;
     let max_index_y = HEIGHT as usize - ENEMY_HEIGHT as usize;
 
-    let raw_random_value = rng[30] ^ rng[31];
-    let scaled_random_value = (raw_random_value % 7) + 3;
-
-    let num_teleporters = scaled_random_value as usize;
+    let num_teleporters = 4;
 
     for i in 0..num_teleporters {
         let random_value_x = rng[i] ^ rng[(31 - i) % rng.len()];
@@ -134,33 +128,38 @@ fn spawn_enemy(enemies: &mut [(f32, f32, f32, f32); MAX_ENEMY], rng: [u32; 32]) 
 fn move_enemy(enemies: &mut [(f32, f32, f32, f32); MAX_ENEMY]) {
     for enemy in enemies.iter_mut() {
         let (x, y, state, count) = enemy;
-        let movement_count = 50.0; // Number of steps to move in one direction
+        let movement_count = 64.0;
 
         if *count >= movement_count {
             *state = match *state {
-                1.0 => 2.0, // After moving right, move up
-                2.0 => 3.0, // After moving up, move left
-                3.0 => 4.0, // After moving left, move down
-                4.0 => 1.0, // After moving down, move right again
-                _ => 1.0,   // Default to moving right if state is unknown
+                1.0 => 2.0,
+                2.0 => 3.0,
+                3.0 => 4.0,
+                4.0 => 1.0,
+                _ => 1.0,
             };
-            *count = 1.0; // Reset count after changing direction
+            *count = 1.0;
         } else {
-            *count += 1.0; // Increment count for each step in the current direction
+            *count += 1.0;
         }
 
         match *state {
-            1.0 => *x += 1.0, // Move right
-            2.0 => *y -= 1.0, // Move up (assuming y decreases as you go up)
-            3.0 => *x -= 1.0, // Move left
-            4.0 => *y += 1.0, // Move down
+            1.0 => *x += 1.0,
+            2.0 => *y -= 1.0,
+            3.0 => *x -= 1.0,
+            4.0 => *y += 1.0,
             _ => (),
         }
     }
 }
 
 #[inline]
-fn move_player(teleporters: &mut [Option<(f32, f32, f32)>; MAX_TELEPORT], input: &mut [u8; 1]) {
+fn move_player(
+    teleporters: &mut [Option<(f32, f32, f32)>; MAX_TELEPORT],
+    input: &mut [u8; 1],
+    reset: &mut [u8; 1],
+    enemies: &mut [(f32, f32, f32, f32); MAX_ENEMY],
+) {
     if input[0] == 1 {
         if let Some((current, target)) = find_teleporter_targets(teleporters) {
             if let (Some(current_pos), Some(target_pos)) =
@@ -184,6 +183,17 @@ fn move_player(teleporters: &mut [Option<(f32, f32, f32)>; MAX_TELEPORT], input:
                 } else {
                     let dir_x = dx / distance;
                     let dir_y = dy / distance;
+
+                    for enemy in enemies.iter() {
+                        let (enemy_x, enemy_y, _, _) = enemy;
+                        let enemy_dx = *enemy_x - current_pos.0;
+                        let enemy_dy = *enemy_y - current_pos.1;
+                        let enemy_distance = sqrt_approx(enemy_dx * enemy_dx + enemy_dy * enemy_dy);
+
+                        if enemy_distance <= 10.0 {
+                            *reset = [2];
+                        }
+                    }
 
                     teleporters[current] = Some((
                         current_pos.0 + dir_x * TELEPORT_SPEED,
@@ -235,48 +245,6 @@ fn find_teleporter_targets(
     })?;
 
     Some((current_index, next_target_index))
-}
-
-fn check_collision(
-    teleporters: &mut [Option<(f32, f32, f32)>; MAX_TELEPORT],
-    enemies: &mut [(f32, f32, f32, f32); MAX_ENEMY],
-    reset: &mut [u8; 1],
-) {
-    // Iterate over teleporters and enemies to check for collisions
-    for teleporter in teleporters.iter_mut() {
-        if let Some((tele_x, tele_y, tele_state)) = teleporter {
-            if *tele_state == 1.0 {
-                // Check if the teleporter is in the specified state
-                for enemy in enemies.iter_mut() {
-                    let (mut enemy_x, mut enemy_y, _, _) = *enemy;
-
-                    // Determine the horizontal and vertical distances between the teleporter and enemy centers
-                    let horizontal_distance = if tele_x > &mut enemy_x {
-                        *tele_x - enemy_x
-                    } else {
-                        enemy_x - *tele_x
-                    };
-                    let vertical_distance = if tele_y > &mut enemy_y {
-                        *tele_y - enemy_y
-                    } else {
-                        enemy_y - *tele_y
-                    };
-
-                    // Determine the combined half-widths and half-heights
-                    let combined_half_width = TELEPORT_SIZE as f32 / 2.0 + ENEMY_WIDTH as f32 / 2.0;
-                    let combined_half_height =
-                        TELEPORT_SIZE as f32 / 2.0 + ENEMY_HEIGHT as f32 / 2.0;
-
-                    // Check if the teleporter and enemy overlap
-                    if horizontal_distance < combined_half_width
-                        && vertical_distance < combined_half_height
-                    {
-                        reset[0] = 2;
-                    }
-                }
-            }
-        }
-    }
 }
 
 #[inline]
