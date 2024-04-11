@@ -35,7 +35,6 @@ unsafe extern "C" fn blockwars() {
     if RESET[0] == 1 {
         RESET[0] = 0;
         INPUT[0] = 0;
-        DRAW.iter_mut().for_each(|b| *b = 0);
         spawn_tele(&mut *ptr::addr_of_mut!(TELEPORT), SEED);
         spawn_enemy(&mut *ptr::addr_of_mut!(ENEMY), SEED);
     } else if RESET[0] == 0 {
@@ -59,17 +58,11 @@ fn frame_safe(
     enemies: &mut [(f32, f32, f32, f32); MAX_ENEMY],
     reset: &mut [u8; 1],
 ) {
-    let gg = teleporters
-        .iter()
-        .rev()
-        .find_map(|t| t.as_ref())
-        .map_or(false, |teleporter| teleporter.2 == 1.0);
-
     if input[0] == 1 {
         move_player(teleporters, input, reset, enemies);
     }
     move_enemy(enemies);
-    render_frame(draw, teleporters, enemies, gg);
+    render_frame(draw, teleporters, enemies);
 }
 
 #[inline]
@@ -184,6 +177,12 @@ fn move_player(
                     let dir_x = dx / distance;
                     let dir_y = dy / distance;
 
+                    teleporters[current] = Some((
+                        current_pos.0 + dir_x * TELEPORT_SPEED,
+                        current_pos.1 + dir_y * TELEPORT_SPEED,
+                        current_pos.2,
+                    ));
+
                     for enemy in enemies.iter() {
                         let (enemy_x, enemy_y, _, _) = enemy;
                         let enemy_dx = *enemy_x - current_pos.0;
@@ -194,12 +193,6 @@ fn move_player(
                             *reset = [2];
                         }
                     }
-
-                    teleporters[current] = Some((
-                        current_pos.0 + dir_x * TELEPORT_SPEED,
-                        current_pos.1 + dir_y * TELEPORT_SPEED,
-                        current_pos.2,
-                    ));
                 }
             }
         }
@@ -252,37 +245,31 @@ fn render_frame(
     draw: &mut [u32; 255 * 255],
     teleporters: &mut [Option<(f32, f32, f32)>; MAX_TELEPORT],
     enemies: &mut [(f32, f32, f32, f32); MAX_ENEMY],
-    gg: bool,
 ) {
-    let mut draw_rect = |x: f32, y: f32, width: u8, height: u8, state: u32| {
-        for dy in 0..height {
-            for dx in 0..width {
-                let index =
-                    (y + f32::from(dy)) as usize * WIDTH as usize + (x + f32::from(dx)) as usize;
-                if index < draw.len() {
-                    draw[index] = 0;
-                    draw[index] = state;
-                }
-            }
-        }
-    };
-
     for state in (0..=4).rev() {
         for teleport in teleporters.iter() {
             if let Some((x, y, tele_state)) = teleport {
                 if *tele_state == state as f32 {
-                    draw_rect(*x, *y, TELEPORT_SIZE, TELEPORT_SIZE, state);
+                    draw_rect(draw, *x, *y, TELEPORT_SIZE, TELEPORT_SIZE, state);
                 }
             }
         }
         for enemy in enemies.iter() {
             let (x, y, enemy_state, _) = enemy;
             if *enemy_state == state as f32 {
-                if gg {
-                    draw_rect(*x, *y, ENEMY_WIDTH, ENEMY_HEIGHT, 1);
-                } else {
-                    draw_rect(*x, *y, ENEMY_WIDTH, ENEMY_HEIGHT, 5);
-                }
+                draw_rect(draw, *x, *y, ENEMY_WIDTH, ENEMY_HEIGHT, 5);
+            }
+        }
+    }
+}
+#[inline]
+fn draw_rect(draw: &mut [u32; 255 * 255], x: f32, y: f32, width: u8, height: u8, state: u32) {
+    for dy in 0..height {
+        for dx in 0..width {
+            let index =
+                (y + f32::from(dy)) as usize * WIDTH as usize + (x + f32::from(dx)) as usize;
+            if index < draw.len() {
+                draw[index] = state;
             }
         }
     }

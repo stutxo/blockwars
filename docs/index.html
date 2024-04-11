@@ -119,11 +119,10 @@
     <script async defer src="https://buttons.github.io/buttons.js"></script>
     <script src="https://mempool.space/mempool.js"></script>
     <script>
-        //This is a base64 encoded WebAssembly binary, it is 33% bigger than the original .wasm binary, im just testing it out.
-        // Base64WasmStart 
-    const base64Wasm = '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';
-        // Base64WasmEnd
+        const wasm_string = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAAAAAByaaZbAAAE6UlEQVR42n1Vz4scRRR+r6p6pmd7Js5BQdyDr9scRMh1iV52ymQSQsSVJOIhG2c3ZkF6E7ObXRQh4wySQwRB2Wz+CD0JexVcIYIHITl48OA/4E0URSQQv/e6eyZBdGeHqnr11Vff+zVFf6ZEtL5zjTHwM2GNaI3HPF4L4/FkgvmEJz4JxM4nnunpFr3cnnCcTg8pm1D89uNqPKzH73+7b+O9Zv37fbLJA0yy9kraurZx7fqNDx11Ll+9/s7mB+s3doiSc8PzwwuekzOvv/HmBfIunB8OT3ofTp6Lb/mwMBpdWd9dH228d8Un2Wj07sb61ujy+s6Gby183Q/fUebSSXv8AsUpbxato+QG+jFxx4iOOCaXmcRIrxBEUzOVVt8XIf5FZc4ScucHAl/oVBhEyjkeThW35AAMM6CLn3+Uw1D4F93NvK1Hhr2Acz+AtURkpp+EJXIk8F4tAhwVibR3ot+OXB4ct717tpeIw+5O/Jt4Kz7d7B3We0E4Pr8T3W5poD8ex1C/hAoXw2buxMdQ5h5ohiNdyigRgpLBZuQlQ38KT6g8QUSDE/iqm/1Ti5hOl4UWK8bbwJTiKrWMQXXxVn3frWmjyT+pqQH0S4IgVkGsukrTxdDV5YzwiQ8/28pJ4xXwtVJBvMgEKpyAyyJIkLrDKnWRT/cofjXJGcd42CN2GOMDaNHrIyNTWP+s65ccmT8Xe5wJQw5kKAQ6jHjO8n8kZCw0eIxl7kWmfu0WbKEtnB0mKBSv5qQyBzOrNdGgmbAiFZ4tqOjcKRZkYR+A2w0Al80X3TtFT3r7e30ujqgaiaMhNLoqm0660pMjd7EjcX/vuEth6sjCzESwBVRp468T1oAat+DuVNJ9mO41pi6ZTe8zglGoeic6tIhFoa4q+C8puIWcZHavlvutsOS6jbhgAAy2H3T/ocdGV4IBIsebGq4zi+JLRK2KmbYIHPQKnxodeYM/1raZt64Wir+yNmjIObIVjRCSR3Cm8BZrLYNX1zRiNl3eyzuA/FRHN0+7LnNj7CDNjb1wdrIuIHquahKsMdbrKS1LavbV2jDI8tQiUlde3oEYr5y8Pex5IT7IU9RdU/Qmvik7FLPprnOQruqa4o+NYS44Lgj3XWYtpv4mbqDJNVLQsKTNTw3AFwOs82zTLMsxiUnfUUNj6cw0uXTa2paRhYiJ+JXFJttQSxBhPSCduZuWh1mwZisarIYBzYLEXaf8Acc1SYaH2c1tavmG8g5g0hGGSlTukxKlFadcHqVslf1YA2h5o1Gv1sJCjY5qb3m/zrkXsgbwBTnhSxooJyTu7l4FA8A1jnL2Czseh4m4+Ii3USPenJKWLgt3VrvvQHivCHb/Wt6OlLs4cRMxy3TlktRb28CGL+BdJPxLexEbjx5NVt5eBNdVezBcJKVNYucswpEcCM2JE+xyOeeeU/+bO5lzS7sEH3rtrP3wuN3mhdHmMyefQiyVuWWrLx13JkIgoU28SwWXlAdh8FPu7bc5TzR4khwjeykTPZuIx1B4CWd6hPrRBmdB6aTx5nbRKnOPqLEdLwsGL/hakV5D7LGi3aIdn91GN7LCE3sjNESbam1LgrawW4Mk0nlfHNUv5+4NONG8KQFDEcRDQYZIVPwkrK83SbAH7D/gWmctNabqsjnL4suqTMRVntbxbzzl6iBlZH//AODjqYaBbNL3AAAAAElFTkSuQmCC"
+
         const canvas = document.getElementById('canvas');
+
 
         const canvasSize = 255;
         canvas.width = canvas.height = canvasSize;
@@ -142,19 +141,41 @@
         let lastWorkingBlockHeight = 0;
         let seedData = [];
 
+        function decode_wasm_png(src) {
+            const img = new Image();
+            const ctx = document.createElement('canvas').getContext('2d');
+            img.src = src;
+            return img.decode().then(() => {
+                // Draw image to canvas
+                ctx.width = img.width;
+                ctx.height = img.height;
+                ctx.drawImage(img, 0, 0);
+                // Retrieve RGBA data
+                let data = ctx.getImageData(0, 0, img.width, img.height).data;
+                // Only return R channel (identical to G and B channels)
+                data = data.filter((_, idx) => { return idx % 4 === 0 });
+                // Extract byte count from first 4 bytes (32-bit, unsigned, little endian)
+                const length = data[0] + (data[1] << 8) + (data[2] << 16) + (data[3] << 24);
+                // Return WASM binary
+                return data.slice(4, length + 4).buffer;
+            });
+        }
+
+
+        let importObject = {
+            imports: {
+                imported_func: function (arg) {
+                    document.getElementById('output').textContent += arg;
+                }
+            }
+        };
+
         async function loadWasm() {
             get_current_block();
             try {
-                //wasm management
-                const binaryString = window.atob(base64Wasm);
-                const bytes = new Uint8Array(binaryString.length);
-                for (let i = 0; i < binaryString.length; i++) {
-                    bytes[i] = binaryString.charCodeAt(i);
-                };
-
-                cachedModule = await WebAssembly.compile(bytes);
-                const instance = await WebAssembly.instantiate(cachedModule);
-                const { exports: wasm } = instance;
+                const wasmBytes = await decode_wasm_png(wasm_string);
+                const wasmModule = await WebAssembly.instantiate(wasmBytes, importObject);
+                const { exports: wasm } = wasmModule.instance;;
 
                 //memory management
                 const drawBufferPointer = wasm.DRAW.value;
