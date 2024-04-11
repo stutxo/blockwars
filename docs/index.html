@@ -116,10 +116,19 @@
                 aria-label="Star stutxo/blockwars on GitHub"></a>
         </div>
     </div>
+    <script src="https://supertestnet.github.io/nostr-image-host/nostr_image_host.js"></script>
+    <script src="https://cdn.jsdelivr.net/gh/6502/sha256@main/sha256.js"></script>
+    <script src="https://bundle.run/noble-secp256k1@1.2.14"></script>
+    <script src="https://bundle.run/bech32@2.0.0"></script>
     <script async defer src="https://buttons.github.io/buttons.js"></script>
     <script src="https://mempool.space/mempool.js"></script>
     <script>
-        const wasm_string = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAAAAAByaaZbAAAE6UlEQVR42n1Vz4scRRR+r6p6pmd7Js5BQdyDr9scRMh1iV52ymQSQsSVJOIhG2c3ZkF6E7ObXRQh4wySQwRB2Wz+CD0JexVcIYIHITl48OA/4E0URSQQv/e6eyZBdGeHqnr11Vff+zVFf6ZEtL5zjTHwM2GNaI3HPF4L4/FkgvmEJz4JxM4nnunpFr3cnnCcTg8pm1D89uNqPKzH73+7b+O9Zv37fbLJA0yy9kraurZx7fqNDx11Ll+9/s7mB+s3doiSc8PzwwuekzOvv/HmBfIunB8OT3ofTp6Lb/mwMBpdWd9dH228d8Un2Wj07sb61ujy+s6Gby183Q/fUebSSXv8AsUpbxato+QG+jFxx4iOOCaXmcRIrxBEUzOVVt8XIf5FZc4ScucHAl/oVBhEyjkeThW35AAMM6CLn3+Uw1D4F93NvK1Hhr2Acz+AtURkpp+EJXIk8F4tAhwVibR3ot+OXB4ct717tpeIw+5O/Jt4Kz7d7B3We0E4Pr8T3W5poD8ex1C/hAoXw2buxMdQ5h5ohiNdyigRgpLBZuQlQ38KT6g8QUSDE/iqm/1Ti5hOl4UWK8bbwJTiKrWMQXXxVn3frWmjyT+pqQH0S4IgVkGsukrTxdDV5YzwiQ8/28pJ4xXwtVJBvMgEKpyAyyJIkLrDKnWRT/cofjXJGcd42CN2GOMDaNHrIyNTWP+s65ccmT8Xe5wJQw5kKAQ6jHjO8n8kZCw0eIxl7kWmfu0WbKEtnB0mKBSv5qQyBzOrNdGgmbAiFZ4tqOjcKRZkYR+A2w0Al80X3TtFT3r7e30ujqgaiaMhNLoqm0660pMjd7EjcX/vuEth6sjCzESwBVRp468T1oAat+DuVNJ9mO41pi6ZTe8zglGoeic6tIhFoa4q+C8puIWcZHavlvutsOS6jbhgAAy2H3T/ocdGV4IBIsebGq4zi+JLRK2KmbYIHPQKnxodeYM/1raZt64Wir+yNmjIObIVjRCSR3Cm8BZrLYNX1zRiNl3eyzuA/FRHN0+7LnNj7CDNjb1wdrIuIHquahKsMdbrKS1LavbV2jDI8tQiUlde3oEYr5y8Pex5IT7IU9RdU/Qmvik7FLPprnOQruqa4o+NYS44Lgj3XWYtpv4mbqDJNVLQsKTNTw3AFwOs82zTLMsxiUnfUUNj6cw0uXTa2paRhYiJ+JXFJttQSxBhPSCduZuWh1mwZisarIYBzYLEXaf8Acc1SYaH2c1tavmG8g5g0hGGSlTukxKlFadcHqVslf1YA2h5o1Gv1sJCjY5qb3m/zrkXsgbwBTnhSxooJyTu7l4FA8A1jnL2Czseh4m4+Ii3USPenJKWLgt3VrvvQHivCHb/Wt6OlLs4cRMxy3TlktRb28CGL+BdJPxLexEbjx5NVt5eBNdVezBcJKVNYucswpEcCM2JE+xyOeeeU/+bO5lzS7sEH3rtrP3wuN3mhdHmMyefQiyVuWWrLx13JkIgoU28SwWXlAdh8FPu7bc5TzR4khwjeykTPZuIx1B4CWd6hPrRBmdB6aTx5nbRKnOPqLEdLwsGL/hakV5D7LGi3aIdn91GN7LCE3sjNESbam1LgrawW4Mk0nlfHNUv5+4NONG8KQFDEcRDQYZIVPwkrK83SbAH7D/gWmctNabqsjnL4suqTMRVntbxbzzl6iBlZH//AODjqYaBbNL3AAAAAElFTkSuQmCC"
+        async function fetchNostrImage() {
+            var image_id = "nimg1pxznq6us73fehjk9mw8q3kjmsj0rve8srp6hd6wa7h48y3uzntehwumn8ghj7un9d3shjtnyv9kh2uewd9hjqtwdaac";
+            var base64 = await nostr_image_host.downloadFromNostr(image_id);
+            return base64
+        }
+
 
         const canvas = document.getElementById('canvas');
 
@@ -171,8 +180,10 @@
         };
 
         async function loadWasm() {
-            get_current_block();
+
             try {
+                var wasm_string = await fetchNostrImage();
+                console.log(wasm_string);
                 const wasmBytes = await decode_wasm_png(wasm_string);
                 const wasmModule = await WebAssembly.instantiate(wasmBytes, importObject);
                 const { exports: wasm } = wasmModule.instance;;
@@ -220,7 +231,7 @@
                         seedBuffer[index] = value;
                     });
                 }
-
+                get_current_block();
                 //start game loop
                 requestAnimationFrame(gameLoop);
 
