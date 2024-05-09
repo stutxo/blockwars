@@ -1,6 +1,6 @@
 ## Blockwars.gg
 
-**Tiny Rust web game**
+**Tiny Rust web game stored on nostr**
 
 _Work in progress, no real gameplay yet, just messing around._
 
