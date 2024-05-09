@@ -2,9 +2,7 @@
 
 **Tiny Rust web game stored on nostr**
 
-_Work in progress, no real gameplay yet, just messing around._
-
-use https://github.com/stutxo/wasm_to_image to shrink the wasm file as small as possible by turning it in to png. 
+use https://github.com/stutxo/wasm_to_image to shrink the wasm file as small as possible by turning it in to a png. 
 
 upload the png to nostr via https://supertestnet.github.io/nostr-image-host/ and fetch it in index.html
 
